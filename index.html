@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- PWA / iPhone Tam Ekran Uygulama Meta Etiketleri -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1976d2">
+    <meta name="application-name" content="Yoklama Panel">
+
+    <title>Mobil Yoklama - Öğretmen Paneli</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+            padding: 12px;
+            max-width: 600px;
+            margin: 0 auto;
+            color: #333;
+        }
+        .header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 12px;
+        }
+        .header-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            margin-left: 4px;
+        }
+        .btn-settings { background-color: #607d8b; }
+        .btn-qr { background-color: #00897b; }
+        .btn-save { background-color: #4caf50; }
+        .btn-cancel { background-color: #f44336; }
+        .btn-blue { background-color: #2196f3; }
+        .btn-purple { background-color: #673ab7; }
+        .btn-teal { background-color: #009688; }
+        .btn-orange { background-color: #ff9800; }
+        .btn-indigo { background-color: #3f51b5; }
+        .btn-pink { background-color: #e91e63; }
+
+        .card-panel {
+            background: #ffffff;
+            padding: 14px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 12px;
+        }
+        select, input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            outline: none;
+            margin-bottom: 8px;
+            background: #fff;
+        }
+        .btn-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+        .btn-row button {
+            flex: 1;
+        }
+        .status-box {
+            font-weight: bold;
+            font-size: 13px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            padding: 0 4px;
+        }
+        .student-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #ffffff;
+            overflow-y: auto;
+            max-height: 55vh;
+        }
+        .student-item {
+            display: flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-bottom: 1px solid #eeeeee;
+            border-radius: 0;
+            cursor: pointer;
+        }
+        .student-item:last-child {
+            border-bottom: none;
+        }
+        .student-item:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .student-index {
+            width: 28px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+        }
+        .student-info {
+            flex: 1;
+        }
+        .student-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #111;
+        }
+        .student-no {
+            font-size: 12px;
+            color: #666;
+        }
+        .distance-badge {
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-right: 8px;
+        }
+        .dist-green { background: #e8f5e9; color: #2e7d32; }
+        .dist-red { background: #ffebee; color: #c62828; }
+        .dist-manual { background: #e3f2fd; color: #1565c0; }
+
+        .status-badge {
+            width: 34px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .badge-green { background: #4caf50; }
+        .badge-grey { background: #9e9e9e; }
+
+        /* Modal Popup */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 12px;
+        }
+        .modal-body {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 95vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #1976d2;
+        }
+        .history-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+    <!-- QR Code Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+    <!-- Header Bar -->
+    <div class="header-bar">
+        <div class="header-title">📱 Mobil Yoklama Panel</div>
+        <div>
+            <button id="btnSaveTop" class="btn-sm btn-save" style="display:none;" onclick="saveCurrentSession()">💾 Kaydet</button>
+            <button id="btnCancelTop" class="btn-sm btn-cancel" style="display:none;" onclick="cancelCurrentSession()">❌ İptal</button>
+            <button id="btnSettings" class="btn-sm btn-settings" onclick="openSettingsModal()">⚙️ Ayarlar</button>
+            <button id="btnShowQr" class="btn-sm btn-qr" onclick="openQrModal()">🔲 QR Kod</button>
+        </div>
+    </div>
+
+    <!-- Setup Controls Panel -->
+    <div id="setupPanel" class="card-panel">
+        <label for="courseSelect" style="font-size: 12px; font-weight: bold; color: #666; margin-bottom: 4px; display: block;">Ders Seçiniz:</label>
+        <select id="courseSelect" onchange="onCourseSelected()"></select>
+
+        <div class="btn-row">
+            <button class="btn-sm btn-blue" onclick="openAddCourseModal()">+ Yeni Ders</button>
+            <button class="btn-sm btn-purple" onclick="triggerImportJson()">📂 Yükle</button>
+            <button class="btn-sm btn-teal" onclick="exportJson()">💾 Yedek Al</button>
+        </div>
+
+        <div style="font-size: 13px; color: #555; margin-bottom: 8px; cursor: pointer;" id="tvCourseDetails" onclick="openEditCourseModal()">
+            📚 Ders Bilgileri: Seçilmedi
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-sm btn-orange" onclick="showHistoryModal()">📁 Geçmiş</button>
+            <button class="btn-sm btn-indigo" onclick="showChartModal()">📊 Çizelge</button>
+            <button class="btn-sm btn-pink" onclick="generatePdfReport()">📄 PDF Rapor</button>
+        </div>
+
+        <button class="btn-sm btn-save" style="width: 100%; padding: 14px; margin-top: 6px; font-size: 15px;" onclick="startAttendanceSession()">Yoklamayı Başlat</button>
+    </div>
+
+    <!-- Status Bar -->
+    <div id="tvStatus" class="status-box" style="color: #666;">Durum: 🔴 Yoklama Kapalı</div>
+
+    <!-- Student List Header -->
+    <div class="list-header">
+        <span>Öğrenci Listesi:</span>
+        <span id="tvSummary" style="color: #757575;">Toplam: 0 | Katılan: 0</span>
+    </div>
+
+    <!-- Student List -->
+    <div id="studentContainer" class="student-list"></div>
+
+    <!-- Hidden File Input for Import -->
+    <input type="file" id="fileImportInput" accept=".json" style="display: none;" onchange="handleImportJson(event)" />
+
+    <!-- Modal: Settings -->
+    <div id="modalSettings" class="modal-overlay">
+        <div class="modal-body" style="max-width:420px;">
+            <div class="modal-title">⚙️ Sistem Ayarları</div>
+            <label>Firebase Database URL</label>
+            <input type="text" id="cfgFirebase" placeholder="https://..." />
+            <label>Web Sayfası URL (Öğrenci Giriş Sayfası)</label>
+            <input type="text" id="cfgWeb" placeholder="https://..." />
+            <div class="btn-row" style="margin-top: 12px;">
+                <button class="btn-sm btn-save" onclick="saveSettings()">Kaydet</button>
+                <button class="btn-sm btn-cancel" onclick="closeModal('modalSettings')">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add / Edit Course -->
+    <div id="modalAddCourse" class="modal-overlay">
+        <div class="modal-body" style="max-width:420px;">
+            <div class="modal-title" id="addCourseTitle">✏️ Ders Bilgileri</div>
+            <label>Ders Adı</label>
+            <input type="text" id="inCourseName" placeholder="Örn: İktisada Giriş" />
+            <label>Kredi / Saat</label>
+            <input type="number" id="inCourseCredit" value="3" />
+            <label>Öğretim Elemanı / Hoca</label>
+            <input type="text" id="inInstructor" placeholder="Örn: Prof. Dr. Ahmet Yılmaz" />
+            <label>Öğrenci Listesi (Numara Ad Soyad)</label>
+            <textarea id="inClassList" rows="6" placeholder="20241010  Ahmet Yılmaz&#10;20241011  Mehmet Demir"></textarea>
+            <div class="btn-row" style="margin-top: 12px;">
+                <button class="btn-sm btn-save" onclick="saveCourseForm()">💾 Kaydet / Güncelle</button>
+                <button id="btnDeleteCourse" class="btn-sm btn-cancel" style="display:none;" onclick="deleteCurrentCourse()">🗑️ Dersi Sil</button>
+                <button class="btn-sm btn-settings" onclick="closeModal('modalAddCourse')">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: QR Display -->
+    <div id="modalQr" class="modal-overlay">
+        <div class="modal-body" style="text-align: center; max-width:420px;">
+            <div class="modal-title" id="qrModalTitle">🔲 Kağıt QR Kod</div>
+            <p style="font-size: 13px; color: #555; margin-bottom: 12px;" id="qrSubtitle"></p>
+            <div id="qrcode" style="display: flex; justify-content: center; margin-bottom: 16px;"></div>
+            <button class="btn-sm btn-settings" onclick="closeModal('modalQr')">Kapat</button>
+        </div>
+    </div>
+
+    <!-- Modal: History List -->
+    <div id="modalHistory" class="modal-overlay">
+        <div class="modal-body" style="max-width:420px;">
+            <div class="modal-title" id="historyModalTitle">📁 Geçmiş Yoklamalar</div>
+            <p style="font-size:12px; color:#666; margin-bottom:10px;">Düzenlemek istediğiniz haftanın üzerine tıklayınız:</p>
+            <div id="historyListContainer"></div>
+            <div class="btn-row" style="margin-top: 16px;">
+                <button class="btn-sm btn-settings" onclick="closeModal('modalHistory')">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Past Session -->
+    <div id="modalEditSession" class="modal-overlay">
+        <div class="modal-body" style="max-width:440px;">
+            <div class="modal-title" id="editSessionTitle">✏️ Geçmiş Yoklamayı Düzenle</div>
+            <label>Oturum / Hafta Başlığı</label>
+            <input type="text" id="inEditSessionDate" placeholder="Örn: 1. Hafta (16/09)" />
+            <div id="editSessionSummary" style="font-size:13px; font-weight:bold; color:#1976d2; margin-bottom:8px;"></div>
+            <div id="editSessionStudentList" style="max-height:50vh; overflow-y:auto; border:1px solid #eee; border-radius:8px; padding:4px;"></div>
+            <div class="btn-row" style="margin-top: 16px;">
+                <button class="btn-sm btn-save" onclick="saveEditedSession()">💾 Kaydet</button>
+                <button class="btn-sm btn-cancel" onclick="deleteEditedSession()">🗑️ Yoklamayı Sil</button>
+                <button class="btn-sm btn-settings" onclick="closeModal('modalEditSession'); showHistoryModal();">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Chart / Çizelge -->
+    <div id="modalChart" class="modal-overlay">
+        <div class="modal-body" style="max-width:98vw;">
+            <div class="modal-title" id="chartModalTitle">📊 Devam Çizelgesi</div>
+            <div id="chartTableContainer" style="overflow-x:auto; max-height:75vh;"></div>
+            <div class="btn-row" style="margin-top: 16px;">
+                <button class="btn-sm btn-settings" onclick="closeModal('modalChart')">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const DEFAULT_DB = "https://ogrenciyoklama-ce487-default-rtdb.firebaseio.com/";
+    const DEFAULT_WEB = "https://delicate-gaufre-8c8218.netlify.app";
+
+    let courseList = [];
+    let activeCourse = null;
+    let isAttendanceActive = false;
+    let currentSessionVersion = "";
+    let webPollingTimer = null;
+
+    let editingSessionIndex = -1;
+    let editingHoursMap = {};
+
+    // Load Courses from LocalStorage
+    function loadCoursesFromStorage() {
+        try {
+            const json = localStorage.getItem('CoursePrefs_courses_json');
+            if (json) {
+                courseList = JSON.parse(json);
+            }
+        } catch (e) { console.error(e); }
+        if (!courseList || !Array.isArray(courseList)) courseList = [];
+    }
+
+    function saveCoursesToStorage() {
+        try {
+            localStorage.setItem('CoursePrefs_courses_json', JSON.stringify(courseList));
+        } catch (e) { console.error(e); }
+    }
+
+    function getFirebaseUrl() {
+        return localStorage.getItem('cfg_firebase') || DEFAULT_DB;
+    }
+
+    function getWebUrl() {
+        return localStorage.getItem('cfg_web') || DEFAULT_WEB;
+    }
+
+    function renderCourseSpinner() {
+        const select = document.getElementById('courseSelect');
+        select.innerHTML = '';
+        if (courseList.length === 0) {
+            select.innerHTML = '<option value="">Ders Bulunmuyor (Yeni Ekle veya Yükle)</option>';
+            activeCourse = null;
+            renderCourseDetails();
+            renderStudentList();
+            return;
+        }
+        courseList.forEach((c, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.innerText = `${c.name} (${c.credit} Saat) - ${c.instructor || ''}`;
+            select.appendChild(opt);
+        });
+        if (!activeCourse || courseList.indexOf(activeCourse) === -1) {
+            activeCourse = courseList[0];
+        }
+        select.value = courseList.indexOf(activeCourse);
+        renderCourseDetails();
+        renderStudentList();
+    }
+
+    function onCourseSelected() {
+        const idx = document.getElementById('courseSelect').value;
+        if (idx !== "" && courseList[idx]) {
+            activeCourse = courseList[idx];
+        } else {
+            activeCourse = null;
+        }
+        renderCourseDetails();
+        renderStudentList();
+    }
+
+    function renderCourseDetails() {
+        const tv = document.getElementById('tvCourseDetails');
+        if (!activeCourse) {
+            tv.innerText = "📚 Ders Bilgileri: Seçilmedi";
+        } else {
+            tv.innerText = `📚 ${activeCourse.name} (${activeCourse.credit} Saat)  ℹ️ Detay/Düzenle`;
+        }
+    }
+
+    function renderStudentList() {
+        const container = document.getElementById('studentContainer');
+        const summary = document.getElementById('tvSummary');
+        container.innerHTML = '';
+
+        if (!activeCourse || !activeCourse.students || activeCourse.students.length === 0) {
+            summary.innerText = "Toplam: 0 | Katılan: 0";
+            return;
+        }
+
+        let presentCount = 0;
+        activeCourse.students.forEach((s, idx) => {
+            if (s.isPresent) presentCount++;
+
+            const item = document.createElement('div');
+            item.className = 'student-item';
+            item.onclick = () => toggleStudentManual(s);
+
+            const credit = activeCourse.credit || 3;
+            let distBadgeHtml = '';
+
+            if (s.isPresent) {
+                if (s.distanceMeters !== undefined && s.distanceMeters !== null) {
+                    const isNear = s.distanceMeters <= 70;
+                    distBadgeHtml = `<span class="distance-badge ${isNear ? 'dist-green' : 'dist-red'}">📍 ${s.distanceMeters}m</span>`;
+                } else {
+                    distBadgeHtml = `<span class="distance-badge dist-manual">📍 Elden</span>`;
+                }
+            }
+
+            item.innerHTML = `
+                <div class="student-index">${idx + 1}.</div>
+                <div class="student-info" style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                    <span class="student-no" style="font-size:12.5px; font-weight:bold; color:#1976d2; white-space:nowrap;">${s.studentNo}</span>
+                    <span class="student-name" style="font-size:13px; font-weight:bold; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.fullName}</span>
+                </div>
+                ${distBadgeHtml}
+                <div class="status-badge ${s.isPresent ? 'badge-green' : 'badge-grey'}" style="height:22px; width:28px; font-size:11.5px;">${s.isPresent ? credit : 0}</div>
+            `;
+            container.appendChild(item);
+        });
+
+        summary.innerText = `Toplam: ${activeCourse.students.length} | Katılan: ${presentCount}`;
+    }
+
+    function toggleStudentManual(student) {
+        if (!isAttendanceActive) {
+            alert("Yoklama aktif değil.");
+            return;
+        }
+        student.isPresent = !student.isPresent;
+        if (!student.isPresent) student.distanceMeters = null;
+        renderStudentList();
+    }
+
+    // Attendance Start / Save / Cancel
+    async function startAttendanceSession() {
+        if (!activeCourse) {
+            alert("Lütfen önce bir ders seçiniz!");
+            return;
+        }
+
+        isAttendanceActive = true;
+        currentSessionVersion = Date.now().toString();
+
+        activeCourse.students.forEach(s => { s.isPresent = false; s.distanceMeters = null; });
+
+        document.getElementById('setupPanel').style.display = 'none';
+        document.getElementById('btnSettings').style.display = 'none';
+        document.getElementById('btnSaveTop').style.display = 'inline-block';
+        document.getElementById('btnCancelTop').style.display = 'inline-block';
+        document.getElementById('studentContainer').style.maxHeight = '82vh';
+
+        document.getElementById('tvStatus').innerText = `Durum: 🟢 ${activeCourse.name} Yoklaması Aktif (Sınıf Konumu Alınıyor...)`;
+        document.getElementById('tvStatus').style.color = '#2e7d32';
+
+        renderStudentList();
+
+        // Öğretmen Sınıf Konumunu Al
+        let teacherLocation = null;
+        if (navigator.geolocation) {
+            try {
+                teacherLocation = await new Promise((resolve) => {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                        (err) => { console.warn("Sınıf konumu alınamadı:", err); resolve(null); },
+                        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    );
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        document.getElementById('tvStatus').innerText = `Durum: 🟢 ${activeCourse.name} Yoklaması Aktif (Web QR)`;
+
+        // Push to Firebase
+        await pushFirebaseSession(teacherLocation);
+
+        // Start polling
+        startWebPolling();
+
+        openQrModal();
+    }
+
+    async function pushFirebaseSession(teacherLoc) {
+        if (!activeCourse) return;
+        const db = getFirebaseUrl();
+        const sessId = activeCourse.id;
+
+        const totalPastWeeks = activeCourse.pastSessions ? activeCourse.pastSessions.length : 0;
+        const weekNo = totalPastWeeks + 1;
+
+        const studentsObj = {};
+        activeCourse.students.forEach(s => {
+            let pastAttended = 0;
+            if (activeCourse.pastSessions) {
+                pastAttended = activeCourse.pastSessions.filter(sess =>
+                    (sess.presentStudentNos && sess.presentStudentNos.includes(s.studentNo)) ||
+                    (sess.studentHoursMap && sess.studentHoursMap[s.studentNo] > 0)
+                ).length;
+            }
+            studentsObj[s.studentNo] = { name: s.fullName, pastAttended: pastAttended };
+        });
+
+        const payload = {
+            courseName: activeCourse.name,
+            week: `${weekNo}. Hafta`,
+            totalPastWeeks: totalPastWeeks,
+            sessionVersion: currentSessionVersion,
+            active: true,
+            students: studentsObj
+        };
+
+        if (teacherLoc && teacherLoc.lat && teacherLoc.lng) {
+            payload.location = {
+                lat: teacherLoc.lat,
+                lng: teacherLoc.lng,
+                radiusMeters: 70
+            };
+        }
+
+        try {
+            await fetch(`${db}/sessions/${sessId}.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    function startWebPolling() {
+        if (webPollingTimer) clearInterval(webPollingTimer);
+        const db = getFirebaseUrl();
+        const sessId = activeCourse.id;
+
+        webPollingTimer = setInterval(async () => {
+            if (!isAttendanceActive || !activeCourse) return;
+            try {
+                const res = await fetch(`${db}/sessions/${sessId}/attendance.json`);
+                const data = await res.json();
+                if (data) {
+                    let updated = false;
+                    Object.keys(data).forEach(sNo => {
+                        const student = activeCourse.students.find(s => s.studentNo === sNo);
+                        if (student) {
+                            const dist = data[sNo].distanceMeters !== undefined ? data[sNo].distanceMeters : null;
+                            if (!student.isPresent || student.distanceMeters !== dist) {
+                                student.isPresent = true;
+                                student.distanceMeters = dist;
+                                updated = true;
+                            }
+                        }
+                    });
+                    if (updated) renderStudentList();
+                }
+            } catch (e) { console.error(e); }
+        }, 2000);
+    }
+
+    async function saveCurrentSession() {
+        if (!activeCourse || !isAttendanceActive) return;
+
+        const presentNos = activeCourse.students.filter(s => s.isPresent).map(s => s.studentNo);
+        const totalPastWeeks = activeCourse.pastSessions ? activeCourse.pastSessions.length : 0;
+        const weekNo = totalPastWeeks + 1;
+
+        const hoursMap = {};
+        const distMap = {};
+        activeCourse.students.forEach(s => {
+            if (s.isPresent) {
+                hoursMap[s.studentNo] = activeCourse.credit;
+                if (s.distanceMeters !== null && s.distanceMeters !== undefined) {
+                    distMap[s.studentNo] = s.distanceMeters;
+                }
+            }
+        });
+
+        if (!activeCourse.pastSessions) activeCourse.pastSessions = [];
+        activeCourse.pastSessions.push({
+            id: Date.now().toString(),
+            date: `${weekNo}. Hafta`,
+            presentStudentNos: presentNos,
+            studentHoursMap: hoursMap,
+            studentDistancesMap: distMap
+        });
+
+        saveCoursesToStorage();
+        await stopAndWipeFirebase();
+
+        alert("Yoklama başarıyla kaydedildi!");
+    }
+
+    async function cancelCurrentSession() {
+        if (!confirm("Yoklamayı kaydetmeden çıkmak istediğinize emin misiniz?")) return;
+        await stopAndWipeFirebase();
+        alert("Yoklama kaydedilmeden iptal edildi.");
+    }
+
+    async function stopAndWipeFirebase() {
+        isAttendanceActive = false;
+        if (webPollingTimer) clearInterval(webPollingTimer);
+
+        if (activeCourse) {
+            const db = getFirebaseUrl();
+            const sessId = activeCourse.id;
+            activeCourse.students.forEach(s => { s.isPresent = false; s.distanceMeters = null; });
+            try {
+                await fetch(`${db}/sessions/${sessId}.json`, { method: 'DELETE' });
+            } catch (e) { console.error(e); }
+        }
+
+        document.getElementById('setupPanel').style.display = 'block';
+        document.getElementById('btnSettings').style.display = 'inline-block';
+        document.getElementById('btnSaveTop').style.display = 'none';
+        document.getElementById('btnCancelTop').style.display = 'none';
+        document.getElementById('studentContainer').style.maxHeight = '55vh';
+        document.getElementById('tvStatus').innerText = "Durum: 🔴 Yoklama Kapalı";
+        document.getElementById('tvStatus').style.color = "#666";
+
+        renderStudentList();
+    }
+
+    // Modal Helpers
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function openSettingsModal() {
+        document.getElementById('cfgFirebase').value = getFirebaseUrl();
+        document.getElementById('cfgWeb').value = getWebUrl();
+        openModal('modalSettings');
+    }
+
+    function saveSettings() {
+        const fb = document.getElementById('cfgFirebase').value.trim();
+        const web = document.getElementById('cfgWeb').value.trim();
+        if (fb) localStorage.setItem('cfg_firebase', fb);
+        if (web) localStorage.setItem('cfg_web', web);
+        closeModal('modalSettings');
+        alert("Ayarlar kaydedildi!");
+    }
+
+    function openQrModal() {
+        if (!activeCourse) {
+            alert("Lütfen önce bir ders seçiniz!");
+            return;
+        }
+        const web = getWebUrl();
+        const db = getFirebaseUrl();
+        const fullUrl = `${web}?session=${activeCourse.id}&db=${db}`;
+
+        document.getElementById('qrModalTitle').innerText = `🖨️ ${activeCourse.name} Kağıt QR Kodu`;
+        document.getElementById('qrSubtitle').innerText = `${activeCourse.name} dersine ait sabit kağıt QR kodudur. Çıktısını alıp kullanabilirsiniz.`;
+
+        const qrContainer = document.getElementById('qrcode');
+        qrContainer.innerHTML = '';
+        new QRCode(qrContainer, { text: fullUrl, width: 220, height: 220 });
+
+        openModal('modalQr');
+    }
+
+    function openAddCourseModal() {
+        document.getElementById('addCourseTitle').innerText = "➕ Yeni Ders Ekle";
+        document.getElementById('inCourseName').value = "";
+        document.getElementById('inCourseCredit').value = "3";
+        document.getElementById('inInstructor').value = "";
+        document.getElementById('inClassList').value = "";
+        document.getElementById('btnDeleteCourse').style.display = 'none';
+        openModal('modalAddCourse');
+    }
+
+    function openEditCourseModal() {
+        if (!activeCourse) return;
+        document.getElementById('addCourseTitle').innerText = `✏️ ${activeCourse.name} - Düzenle`;
+        document.getElementById('inCourseName').value = activeCourse.name || "";
+        document.getElementById('inCourseCredit').value = activeCourse.credit || "3";
+        document.getElementById('inInstructor').value = activeCourse.instructor || "";
+
+        let classText = activeCourse.classListText || "";
+        if (!classText && activeCourse.students) {
+            classText = activeCourse.students.map(s => `${s.studentNo}\t${s.fullName}`).join("\n");
+        }
+        document.getElementById('inClassList').value = classText;
+        document.getElementById('btnDeleteCourse').style.display = 'inline-block';
+        openModal('modalAddCourse');
+    }
+
+    function saveCourseForm() {
+        const name = document.getElementById('inCourseName').value.trim();
+        const credit = parseInt(document.getElementById('inCourseCredit').value.trim()) || 3;
+        const instructor = document.getElementById('inInstructor').value.trim();
+        const classListText = document.getElementById('inClassList').value.trim();
+
+        if (!name) { alert("Ders adı boş olamaz!"); return; }
+
+        if (!activeCourse || document.getElementById('addCourseTitle').innerText.includes("Yeni")) {
+            const newCourse = {
+                id: Date.now().toString(),
+                name: name,
+                credit: credit,
+                instructor: instructor,
+                classListText: classListText,
+                students: [],
+                pastSessions: []
+            };
+            parseClassListTextIntoCourse(newCourse, classListText);
+            courseList.push(newCourse);
+            activeCourse = newCourse;
+        } else {
+            activeCourse.name = name;
+            activeCourse.credit = credit;
+            activeCourse.instructor = instructor;
+            activeCourse.classListText = classListText;
+            if (classListText) {
+                activeCourse.students = [];
+                parseClassListTextIntoCourse(activeCourse, classListText);
+            }
+        }
+
+        saveCoursesToStorage();
+        renderCourseSpinner();
+        closeModal('modalAddCourse');
+    }
+
+    function parseClassListTextIntoCourse(courseObj, text) {
+        if (!text) return;
+        const lines = text.split("\n");
+        lines.forEach(line => {
+            const parts = line.trim().split(/[\t,;]+|\s{2,}/);
+            if (parts.length >= 2) {
+                const sNo = parts[0].trim();
+                const sName = parts.slice(1).join(" ").trim();
+                if (sNo && sName) {
+                    courseObj.students.push({ studentNo: sNo, fullName: sName, isPresent: false });
+                }
+            }
+        });
+    }
+
+    function deleteCurrentCourse() {
+        if (!activeCourse) return;
+        if (!confirm(`${activeCourse.name} dersini silmek istediğinize emin misiniz?`)) return;
+
+        const idx = courseList.indexOf(activeCourse);
+        if (idx > -1) courseList.splice(idx, 1);
+        activeCourse = courseList.length > 0 ? courseList[0] : null;
+
+        saveCoursesToStorage();
+        renderCourseSpinner();
+        closeModal('modalAddCourse');
+    }
+
+    function showHistoryModal() {
+        if (!activeCourse || !activeCourse.pastSessions || activeCourse.pastSessions.length === 0) {
+            alert("Bu derse ait geçmiş yoklama kaydı bulunmuyor.");
+            return;
+        }
+        document.getElementById('historyModalTitle').innerText = `📁 ${activeCourse.name} - Geçmiş Yoklamalar`;
+        const container = document.getElementById('historyListContainer');
+        container.innerHTML = '';
+
+        activeCourse.pastSessions.forEach((sess, idx) => {
+            let presentCount = 0;
+            if (sess.studentHoursMap) {
+                presentCount = Object.values(sess.studentHoursMap).filter(h => h > 0).length;
+            } else if (sess.presentStudentNos) {
+                presentCount = sess.presentStudentNos.length;
+            }
+
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.style.cursor = 'pointer';
+            item.onclick = () => openEditSessionModal(idx);
+            item.innerHTML = `
+                <div>
+                    <strong>${idx + 1}. Hafta (${sess.date || ''})</strong>
+                    <div style="font-size:12px; color:#666;">Katılan: ${presentCount} / ${activeCourse.students.length} Öğrenci</div>
+                </div>
+                <button class="btn-sm btn-blue" onclick="event.stopPropagation(); openEditSessionModal(${idx});">✏️ Düzenle</button>
+            `;
+            container.appendChild(item);
+        });
+
+        openModal('modalHistory');
+    }
+
+    function openEditSessionModal(sessionIndex) {
+        if (!activeCourse || !activeCourse.pastSessions || !activeCourse.pastSessions[sessionIndex]) return;
+        editingSessionIndex = sessionIndex;
+        const sess = activeCourse.pastSessions[sessionIndex];
+        const maxCredit = activeCourse.credit || 3;
+
+        document.getElementById('editSessionTitle').innerText = `✏️ ${activeCourse.name} (${sessionIndex + 1}. Hafta)`;
+        document.getElementById('inEditSessionDate').value = sess.date || `${sessionIndex + 1}. Hafta`;
+
+        editingHoursMap = {};
+        activeCourse.students.forEach(s => {
+            if (sess.studentHoursMap && sess.studentHoursMap[s.studentNo] !== undefined) {
+                editingHoursMap[s.studentNo] = sess.studentHoursMap[s.studentNo];
+            } else if (sess.presentStudentNos && sess.presentStudentNos.includes(s.studentNo)) {
+                editingHoursMap[s.studentNo] = maxCredit;
+            } else {
+                editingHoursMap[s.studentNo] = 0;
+            }
+        });
+
+        renderEditSessionStudents();
+        closeModal('modalHistory');
+        openModal('modalEditSession');
+    }
+
+    function renderEditSessionStudents() {
+        const container = document.getElementById('editSessionStudentList');
+        const summary = document.getElementById('editSessionSummary');
+        container.innerHTML = '';
+
+        const maxCredit = activeCourse.credit || 3;
+        let presentCount = 0;
+
+        activeCourse.students.forEach((s, idx) => {
+            const h = editingHoursMap[s.studentNo] || 0;
+            if (h > 0) presentCount++;
+
+            const item = document.createElement('div');
+            item.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;";
+
+            item.innerHTML = `
+                <div>
+                    <strong style="font-size:13px;">${idx + 1}. ${s.fullName}</strong>
+                    <div style="font-size:11px; color:#666;">${s.studentNo}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <button class="btn-sm btn-cancel" style="padding:4px 8px; margin:0;" onclick="changeStudentHours('${s.studentNo}', -1)">-</button>
+                    <span style="font-weight:bold; width:20px; text-align:center;">${h}</span>
+                    <button class="btn-sm btn-save" style="padding:4px 8px; margin:0;" onclick="changeStudentHours('${s.studentNo}', 1)">+</button>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+
+        summary.innerText = `Toplam Öğrenci: ${activeCourse.students.length} | Katılan: ${presentCount}`;
+    }
+
+    function changeStudentHours(studentNo, delta) {
+        const maxCredit = activeCourse.credit || 3;
+        let current = editingHoursMap[studentNo] || 0;
+        current += delta;
+        if (current < 0) current = 0;
+        if (current > maxCredit) current = maxCredit;
+        editingHoursMap[studentNo] = current;
+        renderEditSessionStudents();
+    }
+
+    function saveEditedSession() {
+        if (editingSessionIndex < 0 || !activeCourse || !activeCourse.pastSessions[editingSessionIndex]) return;
+        const sess = activeCourse.pastSessions[editingSessionIndex];
+
+        sess.date = document.getElementById('inEditSessionDate').value.trim() || sess.date;
+        sess.studentHoursMap = editingHoursMap;
+
+        sess.presentStudentNos = [];
+        Object.keys(editingHoursMap).forEach(sNo => {
+            if (editingHoursMap[sNo] > 0) {
+                sess.presentStudentNos.push(sNo);
+            }
+        });
+
+        saveCoursesToStorage();
+        closeModal('modalEditSession');
+        showHistoryModal();
+        alert("Yoklama kaydı başarıyla güncellendi!");
+    }
+
+    function deleteEditedSession() {
+        if (editingSessionIndex < 0 || !activeCourse || !activeCourse.pastSessions[editingSessionIndex]) return;
+        if (!confirm("Bu haftaya ait yoklama kaydını silmek istediğinize emin misiniz?")) return;
+
+        activeCourse.pastSessions.splice(editingSessionIndex, 1);
+        saveCoursesToStorage();
+        closeModal('modalEditSession');
+        showHistoryModal();
+        alert("Yoklama kaydı silindi.");
+    }
+
+    function showChartModal() {
+        if (!activeCourse) {
+            alert("Lütfen önce bir ders seçiniz!");
+            return;
+        }
+        document.getElementById('chartModalTitle').innerText = `📊 ${activeCourse.name} - Devam Çizelgesi`;
+        const container = document.getElementById('chartTableContainer');
+
+        const totalWeeks = 15;
+        const maxCredit = activeCourse.credit || 3;
+        const totalPast = activeCourse.pastSessions ? activeCourse.pastSessions.length : 0;
+
+        let tableHtml = `<table style="width:100%; border-collapse:collapse; font-size:12px; text-align:center;">`;
+        tableHtml += `<thead style="background:#1976d2; color:white;"><tr><th style="padding:6px;">#</th><th style="padding:6px; text-align:left;">Öğrenci No / Adı</th>`;
+        for (let w = 1; w <= totalWeeks; w++) {
+            tableHtml += `<th style="padding:4px;">H${w}</th>`;
+        }
+        tableHtml += `<th style="padding:6px;">Katılım</th><th style="padding:6px;">%</th><th style="padding:6px;">Durum</th></tr></thead><tbody>`;
+
+        activeCourse.students.forEach((s, idx) => {
+            let attendedHours = 0;
+            let weekCells = '';
+
+            for (let w = 0; w < totalWeeks; w++) {
+                if (w < totalPast) {
+                    const sess = activeCourse.pastSessions[w];
+                    let h = 0;
+                    if (sess) {
+                        if (sess.studentHoursMap && sess.studentHoursMap[s.studentNo] !== undefined) {
+                            h = sess.studentHoursMap[s.studentNo];
+                        } else if (sess.presentStudentNos && sess.presentStudentNos.includes(s.studentNo)) {
+                            h = maxCredit;
+                        }
+                    }
+                    if (h > 0) {
+                        attendedHours += h;
+                        weekCells += `<td style="background:#c8e6c9; color:#2e7d32; font-weight:bold;">${h}</td>`;
+                    } else {
+                        weekCells += `<td style="background:#ffcdd2; color:#c62828; font-weight:bold;">0</td>`;
+                    }
+                } else {
+                    weekCells += `<td style="color:#9e9e9e;">-</td>`;
+                }
+            }
+
+            const totalPossible = totalPast * maxCredit;
+            const pct = totalPossible > 0 ? Math.round((attendedHours / totalPossible) * 100) : 100;
+            const isPassed = pct >= 70;
+            const statusHtml = isPassed ? `<span style="color:#2e7d32; font-weight:bold;">GEÇTİ</span>` : `<span style="color:#c62828; font-weight:bold;">KALDI</span>`;
+
+            const bgRow = idx % 2 === 1 ? '#f9f9f9' : '#ffffff';
+            tableHtml += `<tr style="background:${bgRow}; border-bottom:1px solid #eee;">
+                <td style="padding:6px;">${idx + 1}</td>
+                <td style="padding:6px; text-align:left;"><strong>${s.fullName}</strong><br/><small style="color:#666;">${s.studentNo}</small></td>
+                ${weekCells}
+                <td style="padding:6px; font-weight:bold;">${attendedHours}/${totalPossible}</td>
+                <td style="padding:6px; font-weight:bold;">%${pct}</td>
+                <td style="padding:6px;">${statusHtml}</td>
+            </tr>`;
+        });
+
+        tableHtml += `</tbody></table>`;
+        container.innerHTML = tableHtml;
+        openModal('modalChart');
+    }
+
+    // Import / Export JSON
+    function triggerImportJson() {
+        const input = document.getElementById('fileImportInput');
+        input.value = '';
+        input.click();
+    }
+
+    function handleImportJson(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                let data = JSON.parse(e.target.result);
+
+                if (typeof data === 'string') {
+                    try { data = JSON.parse(data); } catch (err) {}
+                }
+
+                let rawCourses = [];
+
+                if (Array.isArray(data)) {
+                    rawCourses = data;
+                } else if (data && data.terms && Array.isArray(data.terms)) {
+                    data.terms.forEach(term => {
+                        if (term.courses && Array.isArray(term.courses)) {
+                            rawCourses.push(...term.courses);
+                        }
+                    });
+                } else if (data && data.courses && Array.isArray(data.courses)) {
+                    rawCourses = data.courses;
+                } else if (data && data.courseList && Array.isArray(data.courseList)) {
+                    rawCourses = data.courseList;
+                } else if (data && typeof data === 'object' && (data.name || data.courseName || data.id)) {
+                    rawCourses = [data];
+                }
+
+                if (!rawCourses || rawCourses.length === 0) {
+                    alert("Yedek dosyasında yüklenecek ders bulunamadı!");
+                    return;
+                }
+
+                const importedList = [];
+
+                rawCourses.forEach(c => {
+                    const courseObj = {
+                        id: c.id || (Date.now().toString() + "_" + Math.floor(Math.random() * 1000)),
+                        name: (c.name || c.courseName || "Ders").trim(),
+                        credit: parseInt(c.credit || c.credits) || 3,
+                        instructor: (c.instructor || c.instructorName || "").trim(),
+                        faculty: (c.faculty || "").trim(),
+                        department: (c.department || "").trim(),
+                        schedule: (c.schedule || "").trim(),
+                        startDate: (c.startDate || "").trim(),
+                        classListText: c.classListText || "",
+                        students: [],
+                        pastSessions: []
+                    };
+
+                    const rawStudents = c.students || [];
+                    rawStudents.forEach(s => {
+                        courseObj.students.push({
+                            studentNo: (s.studentNo || s.studentNumber || "").toString().trim(),
+                            fullName: (s.fullName || s.name || "").toString().trim(),
+                            btAddress: s.btAddress || "",
+                            isPresent: false,
+                            distanceMeters: null
+                        });
+                    });
+
+                    if (c.pastSessions && Array.isArray(c.pastSessions)) {
+                        courseObj.pastSessions = c.pastSessions;
+                    } else {
+                        let maxWeekIndex = -1;
+                        rawStudents.forEach(s => {
+                            if (s.attendanceWeeks && Array.isArray(s.attendanceWeeks)) {
+                                s.attendanceWeeks.forEach((val, idx) => {
+                                    if (val > 0 && idx > maxWeekIndex) {
+                                        maxWeekIndex = idx;
+                                    }
+                                });
+                            }
+                        });
+
+                        if (maxWeekIndex >= 0) {
+                            for (let w = 0; w <= maxWeekIndex; w++) {
+                                const presentNos = [];
+                                const hoursMap = {};
+
+                                rawStudents.forEach(s => {
+                                    const sNo = (s.studentNo || s.studentNumber || "").toString().trim();
+                                    if (s.attendanceWeeks && s.attendanceWeeks[w] > 0) {
+                                        presentNos.push(sNo);
+                                        hoursMap[sNo] = s.attendanceWeeks[w];
+                                    }
+                                });
+
+                                courseObj.pastSessions.push({
+                                    id: Date.now().toString() + "_" + w,
+                                    date: `${w + 1}. Hafta`,
+                                    presentStudentNos: presentNos,
+                                    studentHoursMap: hoursMap,
+                                    studentDistancesMap: {}
+                                });
+                            }
+                        }
+                    }
+
+                    importedList.push(courseObj);
+                });
+
+                courseList = importedList;
+                activeCourse = courseList[0];
+
+                saveCoursesToStorage();
+                renderCourseSpinner();
+
+                alert(`Yedek dosyası başarıyla yüklendi! (${courseList.length} ders ve tüm geçmiş yoklamalar aktarıldı)`);
+            } catch (err) {
+                console.error(err);
+                alert("Yedek dosyası okunurken hata oluştu: " + err.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function exportJson() {
+        if (courseList.length === 0) {
+            alert("Yedeklenecek ders bulunmuyor!");
+            return;
+        }
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        const dateStr = `${dd}${mm}${yyyy}`;
+        const fileName = `yoklama_${dateStr}.json`;
+
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(courseList, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", fileName);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function generatePdfReport() {
+        if (!activeCourse) {
+            alert("Lütfen önce bir ders seçiniz!");
+            return;
+        }
+        window.print();
+    }
+
+    // Init
+    loadCoursesFromStorage();
+    renderCourseSpinner();
+</script>
+</body>
+</html>
