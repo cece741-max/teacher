@@ -143,6 +143,7 @@ body>*:not(#printArea){display:none!important}
 #printArea th,#printArea td{border:1px solid #cfd8dc}
 #printArea td:last-child,#printArea th:last-child{position:static}
 }
+input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;border:1px solid #c5ced7;border-radius:10px;background:var(--surface);color:var(--ink);margin-bottom:8px;color-scheme:light dark}
 </style>
     <!-- QR Code Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -250,6 +251,8 @@ body>*:not(#printArea){display:none!important}
             <input type="number" id="inCourseWeeks" value="15" />
             <label>Devam sınırı (%)</label>
             <input type="number" id="inCourseMin" value="70" />
+            <label>Dersin başlangıç tarihi</label>
+            <input type="date" id="inCourseStart" />
             <label>Öğretim Elemanı / Hoca</label>
             <input type="text" id="inInstructor" placeholder="Örn: Prof. Dr. Ahmet Yılmaz" />
             <label>Öğrenci Listesi (Numara Ad Soyad)</label>
@@ -290,6 +293,8 @@ body>*:not(#printArea){display:none!important}
             <div class="modal-title" id="editSessionTitle">Geçmiş Yoklamayı Düzenle</div>
             <label>Oturum / Hafta Başlığı</label>
             <input type="text" id="inEditSessionDate" placeholder="Örn: 1. Hafta (16/09)" />
+            <label>Tarih</label>
+            <input type="date" id="inEditSessionDateISO" />
             <div id="editSessionSummary" style="font-size:13px; font-weight:bold; color:#1976d2; margin-bottom:8px;"></div>
             <div id="editSessionStudentList" style="max-height:50vh; overflow-y:auto; border:1px solid #eee; border-radius:8px; padding:4px;"></div>
             <div class="btn-row" style="margin-top: 16px;">
@@ -678,6 +683,7 @@ body>*:not(#printArea){display:none!important}
         activeCourse.pastSessions.push({
             id: Date.now().toString(),
             date: `${weekNo}. Hafta`,
+            dateISO: toISO(new Date()),
             presentStudentNos: presentNos,
             studentHoursMap: hoursMap,
             studentDistancesMap: distMap
@@ -775,6 +781,7 @@ body>*:not(#printArea){display:none!important}
         document.getElementById('inCourseCredit').value = "3";
         document.getElementById('inCourseWeeks').value = "15";
         document.getElementById('inCourseMin').value = "70";
+        document.getElementById('inCourseStart').value = "";
         document.getElementById('inInstructor').value = "";
         document.getElementById('inClassList').value = "";
         document.getElementById('btnDeleteCourse').style.display = 'none';
@@ -788,6 +795,8 @@ body>*:not(#printArea){display:none!important}
         document.getElementById('inCourseCredit').value = activeCourse.credit || "3";
         document.getElementById('inCourseWeeks').value = activeCourse.totalWeeks || "15";
         document.getElementById('inCourseMin').value = activeCourse.minAttendance || "70";
+        const sdt = parseCourseDate(activeCourse.startDate);
+        document.getElementById('inCourseStart').value = sdt ? toISO(sdt) : "";
         document.getElementById('inInstructor').value = activeCourse.instructor || "";
 
         let classText = activeCourse.classListText || "";
@@ -805,6 +814,7 @@ body>*:not(#printArea){display:none!important}
         const instructor = document.getElementById('inInstructor').value.trim();
         const totalWeeks = Math.max(1, Math.min(30, parseInt(document.getElementById('inCourseWeeks').value) || 15));
         const minAttendance = Math.max(1, Math.min(100, parseInt(document.getElementById('inCourseMin').value) || 70));
+        const startVal = document.getElementById('inCourseStart').value;
         const classListText = document.getElementById('inClassList').value.trim();
 
         if (!name) { alert("Ders adı boş olamaz!"); return; }
@@ -816,6 +826,7 @@ body>*:not(#printArea){display:none!important}
                 credit: credit,
                 totalWeeks: totalWeeks,
                 minAttendance: minAttendance,
+                startDate: startVal,
                 instructor: instructor,
                 classListText: classListText,
                 students: [],
@@ -829,6 +840,7 @@ body>*:not(#printArea){display:none!important}
             activeCourse.credit = credit;
             activeCourse.totalWeeks = totalWeeks;
             activeCourse.minAttendance = minAttendance;
+            if (startVal || !activeCourse.startDate || parseCourseDate(activeCourse.startDate)) activeCourse.startDate = startVal;
             activeCourse.instructor = instructor;
             activeCourse.classListText = classListText;
             if (classListText) {
@@ -874,6 +886,35 @@ body>*:not(#printArea){display:none!important}
         closeModal('modalAddCourse');
     }
 
+    function parseCourseDate(str) {
+        if (!str) return null;
+        str = String(str).trim();
+        let y, mo, d, m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (m) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+        else {
+            m = str.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})/);
+            if (!m) return null;
+            d = +m[1]; mo = +m[2]; y = +m[3]; if (y < 100) y += 2000;
+        }
+        const dt = new Date(y, mo - 1, d, 12);
+        return (dt.getFullYear() === y && dt.getMonth() === mo - 1 && dt.getDate() === d) ? dt : null;
+    }
+    function toISO(dt) { return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`; }
+    function startBasedDate(c, idx) {
+        const st = parseCourseDate(c.startDate);
+        return st ? new Date(st.getFullYear(), st.getMonth(), st.getDate() + 7 * idx, 12) : null;
+    }
+    function sessionDate(c, idx) {
+        for (let i = idx; i >= 0; i--) {
+            const sess = c.pastSessions && c.pastSessions[i];
+            const own = sess && parseCourseDate(sess.dateISO);
+            if (own) return new Date(own.getFullYear(), own.getMonth(), own.getDate() + 7 * (idx - i), 12);
+        }
+        return startBasedDate(c, idx);
+    }
+    const fmtLong = d => d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+    const fmtShort = d => String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0');
+
     function showHistoryModal() {
         if (!activeCourse || !activeCourse.pastSessions || activeCourse.pastSessions.length === 0) {
             alert("Bu derse ait geçmiş yoklama kaydı bulunmuyor.");
@@ -891,13 +932,15 @@ body>*:not(#printArea){display:none!important}
                 presentCount = sess.presentStudentNos.length;
             }
 
+            const hd = sessionDate(activeCourse, idx);
+            const hx = hd ? fmtLong(hd) : ((sess.date && !/^\d+\.\s*Hafta$/.test(sess.date)) ? sess.date : '');
             const item = document.createElement('div');
             item.className = 'history-item';
             item.style.cursor = 'pointer';
             item.onclick = () => openEditSessionModal(idx);
             item.innerHTML = `
                 <div>
-                    <strong>${idx + 1}. Hafta (${sess.date || ''})</strong>
+                    <strong>${idx + 1}. Hafta${hx ? ' · ' + esc(hx) : ''}</strong>
                     <div style="font-size:12px; color:#666;">Katılan: ${presentCount} / ${activeCourse.students.length} Öğrenci</div>
                 </div>
                 <button class="btn-sm btn-blue" onclick="event.stopPropagation(); openEditSessionModal(${idx});">Düzenle</button>
@@ -916,6 +959,8 @@ body>*:not(#printArea){display:none!important}
 
         document.getElementById('editSessionTitle').innerText = `${activeCourse.name} (${sessionIndex + 1}. Hafta)`;
         document.getElementById('inEditSessionDate').value = sess.date || `${sessionIndex + 1}. Hafta`;
+        const sd = sessionDate(activeCourse, sessionIndex);
+        document.getElementById('inEditSessionDateISO').value = sd ? toISO(sd) : '';
 
         editingHoursMap = {};
         editingOpenNo = null;
@@ -1014,6 +1059,11 @@ body>*:not(#printArea){display:none!important}
         const sess = activeCourse.pastSessions[editingSessionIndex];
 
         sess.date = document.getElementById('inEditSessionDate').value.trim() || sess.date;
+        const dv = document.getElementById('inEditSessionDateISO').value;
+        if (dv) {
+            const base = startBasedDate(activeCourse, editingSessionIndex);
+            if (sess.dateISO || !base || dv !== toISO(base)) sess.dateISO = dv;
+        } else { delete sess.dateISO; }
         sess.studentHoursMap = editingHoursMap;
 
         sess.presentStudentNos = [];
@@ -1069,8 +1119,8 @@ body>*:not(#printArea){display:none!important}
         const COL = { ok: '#2e7d32', risk: '#e65100', over: '#c62828' };
         const nextCol = !d.final && d.played < d.totalWeeks;
         let h = `<table style="width:${print ? 'auto' : '100%'};border-collapse:collapse;font-size:${print ? 11 : 12}px;text-align:center;"><thead style="background:#1976d2;color:#fff;"><tr><th style="padding:${P};">#</th><th style="padding:${P};text-align:left;">Öğrenci No / Adı</th>`;
-        for (let w = 1; w <= d.played; w++) h += `<th style="padding:${PW};">H${w}</th>`;
-        if (nextCol) h += `<th style="padding:${PW};opacity:.55;">H${d.played + 1}</th>`;
+        for (let w = 1; w <= d.played; w++) { const dt = sessionDate(d.c, w - 1); h += `<th style="padding:${PW};">H${w}${dt ? `<br><small style="font-weight:400;opacity:.85;">${fmtShort(dt)}</small>` : ''}</th>`; }
+        if (nextCol) { const dt = sessionDate(d.c, d.played); h += `<th style="padding:${PW};opacity:.55;">H${d.played + 1}${dt ? `<br><small style="font-weight:400;">${fmtShort(dt)}</small>` : ''}</th>`; }
         h += `<th style="padding:${P};">Katılım</th><th style="padding:${P};">%</th><th style="padding:${P};">Kalan hak</th><th style="padding:${P};">Durum</th></tr></thead><tbody>`;
         if (!rows.length) h += `<tr><td colspan="${d.played + 6}" style="padding:16px;color:#5d6b78;">Gösterilecek öğrenci yok.</td></tr>`;
         rows.forEach((r, i) => {
