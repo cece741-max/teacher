@@ -78,11 +78,11 @@ textarea{min-height:120px}
 #chartTableContainer thead{background:var(--primary)!important}
 #editSessionStudentList .btn-sm{min-width:44px;min-height:44px;padding:0!important;font-size:20px;margin:0}
 .history-item{padding:12px 4px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:15px}
-body:not(.session-live) .filters,body:not(.session-live) .list-head{display:none}
+body:not(.session-live) .filters,body:not(.session-live) .list-head{display:none}body:not(.session-live) .student-item .status-badge{display:none}body:not(.session-live) #tvStatus{display:none}
 @media print{.topbar,.tiles,.filters,.action-bar{display:none}}
 
 .brand{min-width:0;flex:1}.brand>*{flex:none}.brand-course{display:flex;flex-direction:column;min-width:0;flex:1 1 auto;margin-left:4px;padding-left:12px;border-left:1px solid var(--line);line-height:1.2}.brand-course b{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand-course span{font-size:12px;font-weight:500;color:var(--muted)}.brand-course:empty{display:none}#courseHero{display:none}.top-actions{margin-left:10px}
-.course-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.course-head .field-label{margin-bottom:0}.edit-link{border:0;background:transparent;color:var(--primary);font-size:14px;font-weight:600;padding:8px 0 8px 12px;min-height:40px}#tvCourseDetails{display:none}body.no-course #btnEditCourse,body.session-live #btnEditCourse{display:none}
+.course-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.course-head .field-label{margin-bottom:0}.edit-link{border:0;background:transparent;color:var(--primary);font-size:14px;font-weight:600;padding:8px 0 8px 12px;min-height:40px}#tvCourseDetails{display:none}
 .hero{margin-bottom:14px}.hero b{display:block;font-size:22px;letter-spacing:-.01em;line-height:1.2}.hero span{font-size:14px;color:var(--muted)}
 .tile-add{grid-column:1/-1;border-style:dashed;color:var(--primary)}
 .sticky-top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-top:6px}
@@ -157,7 +157,6 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
     <header class="topbar">
         <div class="brand"><span class="brand-mark"></span>Yoklama<span id="brandCourse" class="brand-course"></span></div>
         <div class="top-actions">
-            <button id="btnEditCourse" class="hbtn" onclick="openEditCourseModal()">Dersi düzenle</button>
             <button id="btnSettings" class="hbtn" onclick="openSettingsModal()">Ayarlar</button>
             <button id="btnShowQr" class="hbtn" onclick="openQrModal()">QR kod</button>
         </div>
@@ -172,7 +171,7 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
 
     <section id="setupPanel" class="card-panel">
         <div id="courseHero" class="hero"></div>
-        <label for="courseSelect" class="field-label">Ders</label>
+        <div class="course-head"><label for="courseSelect" class="field-label">Ders</label><button type="button" class="edit-link" onclick="openEditCourseModal()">Dersi düzenle</button></div>
         <select id="courseSelect" onchange="onCourseSelected()"></select>
         <button type="button" class="course-row" id="tvCourseDetails" onclick="openEditCourseModal()">Ders bilgileri: Seçilmedi</button>
         <button class="btn-start" onclick="startAttendanceSession()">Yoklamayı başlat</button>
