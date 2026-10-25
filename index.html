@@ -130,6 +130,19 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
 #modalQr .modal-body::before{display:block}
 #modalQr #qrcode canvas,#modalQr #qrcode img{width:min(62vw,260px)!important;height:auto!important}
 #modalQr .btn-sm{width:100%;background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+#chartTableContainer th:last-child,#chartTableContainer td:last-child{position:sticky;right:0;background:#fff}
+#chartTableContainer thead th:last-child{background:var(--primary)}
+#printArea{display:none}
+@page{size:A4 landscape;margin:10mm}
+@media print{
+html,body{background:#fff!important;padding:0!important;max-width:none!important}
+body>*:not(#printArea){display:none!important}
+#printArea{display:block;color:#000;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#printArea h1{font-size:16px;margin-bottom:4px}#printArea .pmeta{font-size:11px;color:#444;margin-bottom:8px}
+#printArea thead{display:table-header-group}#printArea tr{page-break-inside:avoid}
+#printArea th,#printArea td{border:1px solid #cfd8dc}
+#printArea td:last-child,#printArea th:last-child{position:static}
+}
 </style>
     <!-- QR Code Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -233,6 +246,10 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
             <input type="text" id="inCourseName" placeholder="Örn: İktisada Giriş" />
             <label>Kredi / Saat</label>
             <input type="number" id="inCourseCredit" value="3" />
+            <label>Toplam hafta sayısı</label>
+            <input type="number" id="inCourseWeeks" value="15" />
+            <label>Devam sınırı (%)</label>
+            <input type="number" id="inCourseMin" value="70" />
             <label>Öğretim Elemanı / Hoca</label>
             <input type="text" id="inInstructor" placeholder="Örn: Prof. Dr. Ahmet Yılmaz" />
             <label>Öğrenci Listesi (Numara Ad Soyad)</label>
@@ -287,6 +304,8 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
     <div id="modalChart" class="modal-overlay">
         <div class="modal-body" style="max-width:98vw;">
             <div class="modal-title" id="chartModalTitle">Devam Çizelgesi</div>
+            <div id="chartSummary" class="hint" style="margin-bottom:6px"></div>
+            <div class="seg" id="chartSeg" style="margin-bottom:8px"><button class="on" data-f="all" onclick="setChartFilter(false)">Tümü</button><button data-f="risk" onclick="setChartFilter(true)">Riskliler</button></div>
             <p class="hint">Tablo geniş: telefonu yan çevirirsen daha rahat okursun.</p>
             <div id="chartTableContainer" style="overflow-x:auto; max-height:75vh;"></div>
             <div class="btn-row" style="margin-top: 16px;">
@@ -294,6 +313,8 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
             </div>
         </div>
     </div>
+
+<div id="printArea"></div>
 
 <script>
     const DEFAULT_DB = "https://ogrenciyoklama-ce487-default-rtdb.firebaseio.com/";
@@ -752,6 +773,8 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
         document.getElementById('addCourseTitle').innerText = "Yeni Ders Ekle";
         document.getElementById('inCourseName').value = "";
         document.getElementById('inCourseCredit').value = "3";
+        document.getElementById('inCourseWeeks').value = "15";
+        document.getElementById('inCourseMin').value = "70";
         document.getElementById('inInstructor').value = "";
         document.getElementById('inClassList').value = "";
         document.getElementById('btnDeleteCourse').style.display = 'none';
@@ -763,6 +786,8 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
         document.getElementById('addCourseTitle').innerText = `${activeCourse.name} - Düzenle`;
         document.getElementById('inCourseName').value = activeCourse.name || "";
         document.getElementById('inCourseCredit').value = activeCourse.credit || "3";
+        document.getElementById('inCourseWeeks').value = activeCourse.totalWeeks || "15";
+        document.getElementById('inCourseMin').value = activeCourse.minAttendance || "70";
         document.getElementById('inInstructor').value = activeCourse.instructor || "";
 
         let classText = activeCourse.classListText || "";
@@ -778,6 +803,8 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
         const name = document.getElementById('inCourseName').value.trim();
         const credit = parseInt(document.getElementById('inCourseCredit').value.trim()) || 3;
         const instructor = document.getElementById('inInstructor').value.trim();
+        const totalWeeks = Math.max(1, Math.min(30, parseInt(document.getElementById('inCourseWeeks').value) || 15));
+        const minAttendance = Math.max(1, Math.min(100, parseInt(document.getElementById('inCourseMin').value) || 70));
         const classListText = document.getElementById('inClassList').value.trim();
 
         if (!name) { alert("Ders adı boş olamaz!"); return; }
@@ -787,6 +814,8 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
                 id: Date.now().toString(),
                 name: name,
                 credit: credit,
+                totalWeeks: totalWeeks,
+                minAttendance: minAttendance,
                 instructor: instructor,
                 classListText: classListText,
                 students: [],
@@ -798,11 +827,17 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
         } else {
             activeCourse.name = name;
             activeCourse.credit = credit;
+            activeCourse.totalWeeks = totalWeeks;
+            activeCourse.minAttendance = minAttendance;
             activeCourse.instructor = instructor;
             activeCourse.classListText = classListText;
             if (classListText) {
+                const old = {};
+                (activeCourse.students || []).forEach(s => { old[s.studentNo] = s; });
                 activeCourse.students = [];
                 parseClassListTextIntoCourse(activeCourse, classListText);
+                const past = activeCourse.pastSessions ? activeCourse.pastSessions.length : 0;
+                activeCourse.students.forEach(s => { const o = old[s.studentNo]; s.joinWeek = o ? (o.joinWeek || 0) : past; });
             }
         }
 
@@ -1005,69 +1040,83 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
         alert("Yoklama kaydı silindi.");
     }
 
-    function showChartModal() {
-        if (!activeCourse) {
-            alert("Lütfen önce bir ders seçiniz!");
-            return;
-        }
-        document.getElementById('chartModalTitle').innerText = `${activeCourse.name} - Devam Çizelgesi`;
-        const container = document.getElementById('chartTableContainer');
-
-        const totalWeeks = 15;
-        const maxCredit = activeCourse.credit || 3;
-        const totalPast = activeCourse.pastSessions ? activeCourse.pastSessions.length : 0;
-
-        let tableHtml = `<table style="width:100%; border-collapse:collapse; font-size:12px; text-align:center;">`;
-        tableHtml += `<thead style="background:#1976d2; color:white;"><tr><th style="padding:6px;">#</th><th style="padding:6px; text-align:left;">Öğrenci No / Adı</th>`;
-        for (let w = 1; w <= totalWeeks; w++) {
-            tableHtml += `<th style="padding:4px;">H${w}</th>`;
-        }
-        tableHtml += `<th style="padding:6px;">Katılım</th><th style="padding:6px;">%</th><th style="padding:6px;">Durum</th></tr></thead><tbody>`;
-
-        activeCourse.students.forEach((s, idx) => {
-            let attendedHours = 0;
-            let weekCells = '';
-
-            for (let w = 0; w < totalWeeks; w++) {
-                if (w < totalPast) {
-                    const sess = activeCourse.pastSessions[w];
-                    let h = 0;
-                    if (sess) {
-                        if (sess.studentHoursMap && sess.studentHoursMap[s.studentNo] !== undefined) {
-                            h = sess.studentHoursMap[s.studentNo];
-                        } else if (sess.presentStudentNos && sess.presentStudentNos.includes(s.studentNo)) {
-                            h = maxCredit;
-                        }
-                    }
-                    if (h > 0) {
-                        attendedHours += h;
-                        weekCells += `<td style="background:#c8e6c9; color:#2e7d32; font-weight:bold;">${h}</td>`;
-                    } else {
-                        weekCells += `<td style="background:#ffcdd2; color:#c62828; font-weight:bold;">0</td>`;
-                    }
-                } else {
-                    weekCells += `<td style="color:#9e9e9e;">-</td>`;
-                }
+    let chartRiskOnly = false;
+    function chartData() {
+        const c = activeCourse, credit = c.credit || 3;
+        const totalWeeks = c.totalWeeks || 15, minPct = c.minAttendance || 70;
+        const played = c.pastSessions ? c.pastSessions.length : 0;
+        const allowed = Math.floor(totalWeeks * credit * (100 - minPct) / 100 + 1e-9);
+        const rows = c.students.map((s, idx) => {
+            const join = Math.min(s.joinWeek || 0, played);
+            let att = 0; const cells = [];
+            for (let w = 0; w < played; w++) {
+                if (w < join) { cells.push(null); continue; }
+                const sess = c.pastSessions[w]; let h = 0;
+                if (sess && sess.studentHoursMap && sess.studentHoursMap[s.studentNo] !== undefined) h = sess.studentHoursMap[s.studentNo];
+                else if (sess && sess.presentStudentNos && sess.presentStudentNos.includes(s.studentNo)) h = credit;
+                att += h; cells.push(h);
             }
-
-            const totalPossible = totalPast * maxCredit;
-            const pct = totalPossible > 0 ? Math.round((attendedHours / totalPossible) * 100) : 100;
-            const isPassed = pct >= 70;
-            const statusHtml = isPassed ? `<span style="color:#2e7d32; font-weight:bold;">GEÇTİ</span>` : `<span style="color:#c62828; font-weight:bold;">KALDI</span>`;
-
-            const bgRow = idx % 2 === 1 ? '#f9f9f9' : '#ffffff';
-            tableHtml += `<tr style="background:${bgRow}; border-bottom:1px solid #eee;">
-                <td style="padding:6px;">${idx + 1}</td>
-                <td style="padding:6px; text-align:left;"><strong>${s.fullName}</strong><br/><small style="color:#666;">${s.studentNo}</small></td>
-                ${weekCells}
-                <td style="padding:6px; font-weight:bold;">${attendedHours}/${totalPossible}</td>
-                <td style="padding:6px; font-weight:bold;">%${pct}</td>
-                <td style="padding:6px;">${statusHtml}</td>
-            </tr>`;
+            const possible = (played - join) * credit;
+            const rem = allowed - Math.max(0, possible - att);
+            const state = rem < 0 ? 'over' : (rem <= allowed * 0.25 ? 'risk' : 'ok');
+            return { s, idx, cells, att, possible, pct: possible ? Math.round(att / possible * 100) : null, rem, state };
         });
+        return { c, credit, totalWeeks, minPct, played, allowed, rows, final: played >= totalWeeks };
+    }
 
-        tableHtml += `</tbody></table>`;
-        container.innerHTML = tableHtml;
+    function chartTableHtml(d, rows, print) {
+        const COL = { ok: '#2e7d32', risk: '#e65100', over: '#c62828' };
+        const nextCol = !d.final && d.played < d.totalWeeks;
+        let h = `<table style="width:100%;border-collapse:collapse;font-size:${print ? 11 : 12}px;text-align:center;"><thead style="background:#1976d2;color:#fff;"><tr><th style="padding:6px;">#</th><th style="padding:6px;text-align:left;">Öğrenci No / Adı</th>`;
+        for (let w = 1; w <= d.played; w++) h += `<th style="padding:4px;">H${w}</th>`;
+        if (nextCol) h += `<th style="padding:4px;opacity:.55;">H${d.played + 1}</th>`;
+        h += `<th style="padding:6px;">Katılım</th><th style="padding:6px;">%</th><th style="padding:6px;">Kalan hak</th><th style="padding:6px;">Durum</th></tr></thead><tbody>`;
+        if (!rows.length) h += `<tr><td colspan="${d.played + 6}" style="padding:16px;color:#5d6b78;">Gösterilecek öğrenci yok.</td></tr>`;
+        rows.forEach((r, i) => {
+            let cells = '';
+            r.cells.forEach(v => {
+                cells += v === null ? `<td style="color:#9e9e9e;">–</td>`
+                    : v > 0 ? `<td style="background:#c8e6c9;color:#2e7d32;font-weight:bold;">${v}</td>`
+                    : `<td style="background:#ffcdd2;color:#c62828;font-weight:bold;">0</td>`;
+            });
+            if (nextCol) cells += `<td style="color:#bdbdbd;">-</td>`;
+            const label = d.final ? (r.state === 'over' ? 'Sağlamadı' : 'Sağladı') : { ok: 'Güvende', risk: 'Risk', over: 'Sınır aşıldı' }[r.state];
+            const col = COL[d.final && r.state !== 'over' ? 'ok' : r.state];
+            h += `<tr style="background:${i % 2 ? '#f9f9f9' : '#fff'};border-bottom:1px solid #eee;">
+                <td style="padding:6px;">${r.idx + 1}</td>
+                <td style="padding:6px;text-align:left;"><strong>${esc(r.s.fullName)}</strong><br/><small style="color:#666;">${esc(r.s.studentNo)}</small></td>
+                ${cells}
+                <td style="padding:6px;font-weight:bold;">${r.att}/${r.possible}</td>
+                <td style="padding:6px;font-weight:bold;">${r.pct === null ? '-' : '%' + r.pct}</td>
+                <td style="padding:6px;font-weight:bold;color:${COL[r.state]};">${r.rem >= 0 ? r.rem : (-r.rem) + ' aştı'}</td>
+                <td style="padding:6px;font-weight:bold;color:${col};">${label}</td></tr>`;
+        });
+        return h + `</tbody></table>`;
+    }
+
+    function chartSummaryText(d) {
+        const over = d.rows.filter(r => r.state === 'over').length, risk = d.rows.filter(r => r.state === 'risk').length;
+        return d.played ? `${d.played}/${d.totalWeeks}. hafta · devam sınırı %${d.minPct} (en fazla ${d.allowed} saat devamsızlık) · ${risk} risk · ${over} sınır aşıldı` : 'Henüz kaydedilmiş yoklama yok.';
+    }
+
+    function renderChart() {
+        const d = chartData();
+        const risky = d.rows.filter(r => r.state !== 'ok');
+        document.getElementById('chartModalTitle').innerText = `${d.c.name} - Devam Çizelgesi`;
+        document.getElementById('chartSummary').innerText = chartSummaryText(d);
+        document.querySelectorAll('#chartSeg button').forEach(b => {
+            const risk = b.dataset.f === 'risk';
+            b.classList.toggle('on', risk === chartRiskOnly);
+            b.textContent = risk ? `Riskliler ${risky.length}` : `Tümü ${d.rows.length}`;
+        });
+        document.getElementById('chartTableContainer').innerHTML = chartTableHtml(d, chartRiskOnly ? risky : d.rows, false);
+    }
+    function setChartFilter(riskOnly) { chartRiskOnly = riskOnly; renderChart(); }
+
+    function showChartModal() {
+        if (!activeCourse) { alert("Lütfen önce bir ders seçiniz!"); return; }
+        chartRiskOnly = false;
+        renderChart();
         openModal('modalChart');
     }
 
@@ -1120,6 +1169,8 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
                         id: c.id || (Date.now().toString() + "_" + Math.floor(Math.random() * 1000)),
                         name: (c.name || c.courseName || "Ders").trim(),
                         credit: parseInt(c.credit || c.credits) || 3,
+                        totalWeeks: parseInt(c.totalWeeks) || 15,
+                        minAttendance: parseInt(c.minAttendance) || 70,
                         instructor: (c.instructor || c.instructorName || "").trim(),
                         faculty: (c.faculty || "").trim(),
                         department: (c.department || "").trim(),
@@ -1136,6 +1187,7 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
                             studentNo: (s.studentNo || s.studentNumber || "").toString().trim(),
                             fullName: (s.fullName || s.name || "").toString().trim(),
                             btAddress: s.btAddress || "",
+                            joinWeek: parseInt(s.joinWeek) || 0,
                             isPresent: false,
                             distanceMeters: null
                         });
@@ -1225,10 +1277,12 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
     }
 
     function generatePdfReport() {
-        if (!activeCourse) {
-            alert("Lütfen önce bir ders seçiniz!");
-            return;
-        }
+        if (!activeCourse) { alert("Lütfen önce bir ders seçiniz!"); return; }
+        const d = chartData();
+        document.getElementById('printArea').innerHTML =
+            `<h1>${esc(d.c.name)} - Devam Çizelgesi</h1>` +
+            `<div class="pmeta">${d.c.instructor ? esc(d.c.instructor) + ' · ' : ''}${new Date().toLocaleDateString('tr-TR')} · ${esc(chartSummaryText(d))}</div>` +
+            chartTableHtml(d, d.rows, true);
         window.print();
     }
 
