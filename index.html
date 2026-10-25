@@ -124,6 +124,8 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
 .distance-badge{padding:2px 7px;font-size:11.5px}
 .es-main{min-height:38px;padding:2px 8px}
 .es-name{font-size:14.5px}.es-h{padding:2px 8px;font-size:13px}
+.status-badge{position:relative;cursor:pointer}.status-badge::after{content:"";position:absolute;inset:-7px -8px}
+.student-list .es-edit{background:var(--soft);padding:6px 10px 10px;border-bottom:1px solid var(--line)}
 </style>
     <!-- QR Code Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -381,6 +383,8 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
 
     function renderStudentList() {
         const container = document.getElementById('studentContainer');
+        const st = container.scrollTop;
+        let liveInput = null;
         container.innerHTML = '';
         const students = (activeCourse && activeCourse.students) ? activeCourse.students : [];
         const total = students.length;
@@ -422,11 +426,71 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
                     <span class="student-no">${esc(s.studentNo)}</span>
                 </div>
                 ${dist}
-                <span class="status-badge ${s.isPresent ? 'badge-green' : 'badge-grey'}">${s.isPresent ? credit : 0}</span>`;
+                <span class="status-badge ${s.isPresent ? 'badge-green' : 'badge-grey'}">${s.isPresent ? (s.hours != null ? s.hours : credit) : 0}</span>`;
+            item.querySelector('.status-badge').onclick = ev => { ev.stopPropagation(); openLiveHours(s); };
             container.appendChild(item);
+            if (liveEditNo === s.studentNo) {
+                const box = document.createElement('div');
+                box.className = 'es-edit';
+                const cur = s.isPresent ? (s.hours != null ? s.hours : credit) : 0;
+                box.innerHTML = `
+                    <input type="text" id="liveHoursInput" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" autocomplete="off" aria-label="Saat (0-${credit})" value="${liveDraft !== null ? esc(liveDraft) : cur}">
+                    <button class="btn-sm" type="button">Tamam</button>
+                    <button class="btn-sm btn-save" type="button">Sonraki</button>`;
+                const [okB, nextB] = box.querySelectorAll('button');
+                okB.onclick = () => finishLiveHours(false);
+                nextB.onclick = () => finishLiveHours(true);
+                liveInput = box.querySelector('input');
+                liveInput.oninput = () => { liveDraft = liveInput.value; };
+                liveInput.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); finishLiveHours(true); } };
+                container.appendChild(box);
+            }
         });
 
         if (!shown) container.innerHTML = '<div class="empty">Eşleşen öğrenci yok.</div>';
+        container.scrollTop = st;
+        if (liveInput) {
+            liveInput.parentNode.scrollIntoView({ block: 'nearest' });
+            liveInput.focus();
+            if (liveDraft === null) liveInput.select(); else liveInput.setSelectionRange(liveInput.value.length, liveInput.value.length);
+        }
+    }
+
+    let liveEditNo = null, liveDraft = null;
+    function openLiveHours(s) {
+        if (!isAttendanceActive) { alert("Yoklama aktif değil."); return; }
+        commitLiveHours();
+        liveEditNo = (liveEditNo === s.studentNo) ? null : s.studentNo;
+        liveDraft = null;
+        renderStudentList();
+    }
+    function commitLiveHours() {
+        const inp = document.getElementById('liveHoursInput');
+        if (!inp || liveEditNo === null) return;
+        const s = activeCourse.students.find(x => x.studentNo === liveEditNo);
+        const v = parseInt(inp.value, 10);
+        if (!s || isNaN(v)) return;
+        const h = Math.max(0, Math.min(activeCourse.credit || 3, v));
+        if (h > 0) { if (!s.isPresent) { s.isPresent = true; s.distanceMeters = null; } s.hours = h; }
+        else { s.isPresent = false; s.distanceMeters = null; s.hours = null; }
+    }
+    function visibleStudent(s) {
+        if (studentFilter === 'in' && !s.isPresent) return false;
+        if (studentFilter === 'out' && s.isPresent) return false;
+        const q = document.getElementById('studentSearch').value.trim().toLowerCase();
+        return !q || (s.fullName + ' ' + s.studentNo).toLowerCase().includes(q);
+    }
+    function finishLiveHours(goNext) {
+        commitLiveHours();
+        const list = activeCourse.students;
+        let next = null;
+        if (goNext) {
+            const i = list.findIndex(s => s.studentNo === liveEditNo);
+            for (let j = i + 1; i >= 0 && j < list.length; j++) { if (visibleStudent(list[j])) { next = list[j].studentNo; break; } }
+        }
+        liveEditNo = next;
+        liveDraft = null;
+        renderStudentList();
     }
 
     function toggleStudentManual(student) {
@@ -435,6 +499,7 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
             return;
         }
         student.isPresent = !student.isPresent;
+        student.hours = null;
         if (!student.isPresent) student.distanceMeters = null;
         renderStudentList();
     }
@@ -449,7 +514,7 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
         isAttendanceActive = true;
         currentSessionVersion = Date.now().toString();
 
-        activeCourse.students.forEach(s => { s.isPresent = false; s.distanceMeters = null; });
+        activeCourse.students.forEach(s => { s.isPresent = false; s.distanceMeters = null; s.hours = null; });
 
         document.getElementById('setupPanel').style.display = 'none';
         document.getElementById('btnSettings').style.display = 'none';
@@ -567,6 +632,7 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
 
     async function saveCurrentSession() {
         if (!activeCourse || !isAttendanceActive) return;
+        commitLiveHours();
 
         const presentNos = activeCourse.students.filter(s => s.isPresent).map(s => s.studentNo);
         const totalPastWeeks = activeCourse.pastSessions ? activeCourse.pastSessions.length : 0;
@@ -576,7 +642,7 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
         const distMap = {};
         activeCourse.students.forEach(s => {
             if (s.isPresent) {
-                hoursMap[s.studentNo] = activeCourse.credit;
+                hoursMap[s.studentNo] = (s.hours != null ? s.hours : activeCourse.credit);
                 if (s.distanceMeters !== null && s.distanceMeters !== undefined) {
                     distMap[s.studentNo] = s.distanceMeters;
                 }
@@ -601,7 +667,6 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
     async function cancelCurrentSession() {
         if (!(await askConfirm("Yoklama kaydedilmeden kapatılacak. Devam edilsin mi?", "Kaydetmeden çık"))) return;
         await stopAndWipeFirebase();
-        alert("Yoklama kaydedilmeden iptal edildi.");
     }
 
     async function stopAndWipeFirebase() {
@@ -611,7 +676,7 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
         if (activeCourse) {
             const db = getFirebaseUrl();
             const sessId = activeCourse.id;
-            activeCourse.students.forEach(s => { s.isPresent = false; s.distanceMeters = null; });
+            activeCourse.students.forEach(s => { s.isPresent = false; s.distanceMeters = null; s.hours = null; });
             try {
                 await fetch(`${db}/sessions/${sessId}.json`, { method: 'DELETE' });
             } catch (e) { console.error(e); }
@@ -1186,6 +1251,7 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
   let tt;
   function toast(msg,undo){const t=$('toast');$('toastMsg').textContent=msg;t.hidden=false;$('toastUndo').onclick=()=>{undo();t.hidden=true};clearTimeout(tt);tt=setTimeout(()=>{t.hidden=true},4000)}
   $('studentContainer').addEventListener('click',async e=>{
+    if(e.target.closest('.status-badge'))return;
     const it=e.target.closest('.student-item');if(!it||!isAttendanceActive)return;
     const s=activeCourse.students[parseInt(it.querySelector('.student-index').textContent,10)-1];if(!s)return;
     if(s.isPresent&&s.distanceMeters!=null){
@@ -1193,8 +1259,8 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
       if(await askConfirm(s.fullName+' QR ile katılmış. Gelmedi olarak işaretlensin mi?','Katılımı kaldır'))toggleStudentManual(s);
       return;
     }
-    const was=s.isPresent,d=s.distanceMeters;
-    setTimeout(()=>toast(s.fullName+(was?' gelmedi':' geldi')+' olarak işaretlendi',()=>{s.isPresent=was;s.distanceMeters=d;renderStudentList()}),0);
+    const was=s.isPresent,d=s.distanceMeters,hh=s.hours;
+    setTimeout(()=>toast(s.fullName+(was?' gelmedi':' geldi')+' olarak işaretlendi',()=>{s.isPresent=was;s.distanceMeters=d;s.hours=hh;renderStudentList()}),0);
   },true);
   const mo=new MutationObserver(ui);
   ['studentContainer','tvStatus','tvCourseDetails','courseSelect'].forEach(i=>mo.observe($(i),{childList:true,subtree:true,characterData:true}));
