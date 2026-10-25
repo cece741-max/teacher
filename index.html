@@ -126,6 +126,10 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
 .es-name{font-size:14.5px}.es-h{padding:2px 8px;font-size:13px}
 .status-badge{position:relative;cursor:pointer}.status-badge::after{content:"";position:absolute;inset:-7px -8px}
 .student-list .es-edit{background:var(--soft);padding:6px 10px 10px;border-bottom:1px solid var(--line)}
+#modalQr .modal-body{--surface:#fff;--soft:#f1f4f7;--ink:#16212b;--muted:#5d6b78;--line:#cfd7de;background:#fff;color:#16212b;max-width:420px!important;height:auto;max-height:90vh;border-radius:20px 20px 0 0;justify-content:flex-start;gap:0}
+#modalQr .modal-body::before{display:block}
+#modalQr #qrcode canvas,#modalQr #qrcode img{width:min(62vw,260px)!important;height:auto!important}
+#modalQr .btn-sm{width:100%;background:var(--soft);color:var(--ink);border:1px solid var(--line)}
 </style>
     <!-- QR Code Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -1181,10 +1185,16 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
                 courseList = importedList;
                 activeCourse = courseList[0];
 
+                const bk = (data && data.settings) || {};
+                const okUrl = u => typeof u === 'string' && /^https:\/\//.test(u.trim());
+                let settingsRestored = false;
+                if (okUrl(bk.firebaseUrl)) { localStorage.setItem('cfg_firebase', bk.firebaseUrl.trim()); settingsRestored = true; }
+                if (okUrl(bk.webUrl)) { localStorage.setItem('cfg_web', bk.webUrl.trim()); settingsRestored = true; }
+
                 saveCoursesToStorage();
                 renderCourseSpinner();
 
-                alert(`Yedek dosyası başarıyla yüklendi! (${courseList.length} ders ve tüm geçmiş yoklamalar aktarıldı)`);
+                alert(`Yedek dosyası başarıyla yüklendi! (${courseList.length} ders ve tüm geçmiş yoklamalar aktarıldı${settingsRestored ? "; Firebase ve web adresleri de geri yüklendi" : ""})`);
             } catch (err) {
                 console.error(err);
                 alert("Yedek dosyası okunurken hata oluştu: " + err.message);
@@ -1205,7 +1215,7 @@ body.no-course #setupPanel,body.no-course .sticky-top,body.no-course #studentCon
         const dateStr = `${dd}${mm}${yyyy}`;
         const fileName = `yoklama_${dateStr}.json`;
 
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(courseList, null, 2));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ version: 2, settings: { firebaseUrl: getFirebaseUrl(), webUrl: getWebUrl() }, courses: courseList }, null, 2));
         const downloadAnchor = document.createElement('a');
         downloadAnchor.setAttribute("href", dataStr);
         downloadAnchor.setAttribute("download", fileName);
