@@ -1159,7 +1159,7 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
         const P = print ? '2px 4px' : '6px', PW = print ? '2px 3px' : '4px';
         const COL = { ok: '#2e7d32', risk: '#e65100', over: '#c62828' };
         const nextCol = !d.final && d.played < d.totalWeeks;
-        let h = `<table style="width:${print ? 'auto' : '100%'};border-collapse:collapse;font-size:${print ? 11 : 12}px;text-align:center;"><thead style="background:#1976d2;color:#fff;"><tr><th style="padding:${P};">#</th><th style="padding:${P};text-align:left;">Öğrenci No / Adı</th>`;
+        let h = `<table style="width:100%;border-collapse:collapse;font-size:${print ? 11 : 12}px;text-align:center;"><thead style="background:#1976d2;color:#fff;"><tr><th style="padding:${P};">#</th><th style="padding:${P};text-align:left;">Öğrenci No / Adı</th>`;
         for (let w = 1; w <= d.played; w++) { const dt = sessionDate(d.c, w - 1); h += `<th style="padding:${PW};">H${w}${dt ? `<br><small style="font-weight:400;opacity:.85;">${fmtShort(dt)}</small>` : ''}</th>`; }
         if (nextCol) { const dt = sessionDate(d.c, d.played); h += `<th style="padding:${PW};opacity:.55;">H${d.played + 1}${dt ? `<br><small style="font-weight:400;">${fmtShort(dt)}</small>` : ''}</th>`; }
         h += `<th style="padding:${P};">Katılım</th><th style="padding:${P};">%</th><th style="padding:${P};">Kalan hak</th><th style="padding:${P};">Durum</th></tr></thead><tbody>`;
@@ -1334,11 +1334,14 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
                 let settingsRestored = false;
                 if (okUrl(bk.firebaseUrl)) { localStorage.setItem('cfg_firebase', bk.firebaseUrl.trim()); settingsRestored = true; }
                 if (okUrl(bk.webUrl)) { localStorage.setItem('cfg_web', bk.webUrl.trim()); settingsRestored = true; }
+                const inFb = document.getElementById('cfgFirebase'), inWeb = document.getElementById('cfgWeb');
+                if (inFb) inFb.value = getFirebaseUrl();
+                if (inWeb) inWeb.value = getWebUrl();
 
                 saveCoursesToStorage();
                 renderCourseSpinner();
 
-                alert(`Yedek dosyası başarıyla yüklendi! (${courseList.length} ders ve tüm geçmiş yoklamalar aktarıldı${settingsRestored ? "; Firebase ve web adresleri de geri yüklendi" : ""})`);
+                alert(`Yedek dosyası başarıyla yüklendi! (${courseList.length} ders ve tüm geçmiş yoklamalar aktarıldı${settingsRestored ? "; Firebase ve web adresleri de geri yüklendi" : "; yedekte web adresi bilgisi olmadığı için mevcut adres korundu"})`);
             } catch (err) {
                 console.error(err);
                 alert("Yedek dosyası okunurken hata oluştu: " + err.message);
@@ -1376,18 +1379,11 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
     }
 
     function fitPrint() {
-        const pa = document.getElementById('printArea');
-        const mm = 96 / 25.4, M = 8;
-        pa.style.cssText = 'display:block;position:absolute;left:-99999px;top:0;width:max-content;zoom:1;';
-        const w = pa.scrollWidth, h = pa.scrollHeight;
-        const fit = (pw, ph) => Math.min((pw - 2 * M) * mm / w, (ph - 2 * M) * mm / h);
-        const sL = fit(297, 210), sP = fit(210, 297);
-        const portrait = sP > sL * 1.15;
-        const scale = Math.min(portrait ? sP : sL, 1.3) * 0.98;
+        const d = chartData();
         let st = document.getElementById('pageStyle');
         if (!st) { st = document.createElement('style'); st.id = 'pageStyle'; document.head.appendChild(st); }
-        st.textContent = `@page{size:A4 ${portrait ? 'portrait' : 'landscape'};margin:${M}mm}`;
-        pa.style.cssText = `zoom:${scale};`;
+        st.textContent = `@page{size:A4 ${d.played > 8 ? 'landscape' : 'portrait'};margin:18mm 8mm 8mm 18mm}`;
+        document.getElementById('printArea').style.cssText = '';
     }
 
     function generatePdfReport() {
