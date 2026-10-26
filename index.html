@@ -83,6 +83,14 @@ body:not(.session-live) .filters,body:not(.session-live) .list-head{display:none
 
 .brand{min-width:0;flex:1}.brand>*{flex:none}.brand-course{display:flex;flex-direction:column;min-width:0;flex:1 1 auto;margin-left:4px;padding-left:12px;border-left:1px solid var(--line);line-height:1.2}.brand-course b{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand-course span{font-size:12px;font-weight:500;color:var(--muted)}.brand-course:empty{display:none}#courseHero{display:none}.top-actions{margin-left:10px}
 .course-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.course-head .field-label{margin-bottom:0}.edit-link{border:0;background:transparent;color:var(--primary);font-size:14px;font-weight:600;padding:8px 0 8px 12px;min-height:40px}#tvCourseDetails{display:none}
+#modalAddCourse .modal-body{display:flex;flex-direction:column;height:92vh;height:92dvh;max-height:92vh;padding-top:18px}
+#modalAddCourse .modal-title{margin-bottom:6px}
+#modalAddCourse .cf-field label{margin:6px 0 3px;font-size:12px}
+#modalAddCourse input[type=text],#modalAddCourse input[type=number],#modalAddCourse input[type=date]{min-height:40px;padding:8px 12px;margin-bottom:0;font-size:15px}
+#modalAddCourse .cf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#modalAddCourse .cf-grow{flex:1;display:flex;flex-direction:column;min-height:160px}
+#modalAddCourse .cf-grow textarea{flex:1;min-height:120px;margin-bottom:0;resize:none}
+#modalAddCourse .cf-actions{margin:10px 0 0;flex:none}
 .hero{margin-bottom:14px}.hero b{display:block;font-size:22px;letter-spacing:-.01em;line-height:1.2}.hero span{font-size:14px;color:var(--muted)}
 .tile-add{grid-column:1/-1;border-style:dashed;color:var(--primary)}
 .sticky-top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-top:6px}
@@ -238,6 +246,10 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
                 <button class="btn-sm" onclick="exportJson()">Yedek al</button>
                 <button class="btn-sm" onclick="triggerImportJson()">Yedekten yükle</button>
             </div>
+            <label>Tehlikeli bölge</label>
+            <div class="btn-row">
+                <button class="btn-sm btn-cancel" onclick="deleteAllData()">Tüm verileri sil</button>
+            </div>
             <div class="btn-row" style="margin-top: 12px;">
                 <button class="btn-sm btn-save" onclick="saveSettings()">Kaydet</button>
                 <button class="btn-sm btn-cancel" onclick="closeModal('modalSettings')">Kapat</button>
@@ -249,21 +261,23 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
     <div id="modalAddCourse" class="modal-overlay">
         <div class="modal-body" style="max-width:420px;">
             <div class="modal-title" id="addCourseTitle">Ders Bilgileri</div>
-            <label>Ders Adı</label>
-            <input type="text" id="inCourseName" placeholder="Örn: İktisada Giriş" />
-            <label>Kredi / Saat</label>
-            <input type="number" id="inCourseCredit" value="3" />
-            <label>Toplam hafta sayısı</label>
-            <input type="number" id="inCourseWeeks" value="15" />
-            <label>Devam sınırı (%)</label>
-            <input type="number" id="inCourseMin" value="70" />
-            <label>Dersin başlangıç tarihi</label>
-            <input type="date" id="inCourseStart" />
-            <label>Öğretim Elemanı / Hoca</label>
-            <input type="text" id="inInstructor" placeholder="Örn: Prof. Dr. Ahmet Yılmaz" />
-            <label>Öğrenci Listesi (Numara Ad Soyad)</label>
-            <textarea id="inClassList" rows="6" placeholder="20241010  Ahmet Yılmaz&#10;20241011  Mehmet Demir"></textarea>
-            <div class="btn-row" style="margin-top: 12px;">
+            <div class="cf-field"><label>Ders Adı</label>
+            <input type="text" id="inCourseName" placeholder="Örn: İktisada Giriş" /></div>
+            <div class="cf-field"><label>Öğretim Elemanı / Hoca</label>
+            <input type="text" id="inInstructor" placeholder="Örn: Prof. Dr. Ahmet Yılmaz" /></div>
+            <div class="cf-grid">
+                <div class="cf-field"><label>Saat</label>
+                <input type="number" id="inCourseCredit" value="3" /></div>
+                <div class="cf-field"><label>Hafta</label>
+                <input type="number" id="inCourseWeeks" value="15" /></div>
+                <div class="cf-field"><label>Devam %</label>
+                <input type="number" id="inCourseMin" value="70" /></div>
+            </div>
+            <div class="cf-field"><label>Başlangıç tarihi</label>
+            <input type="date" id="inCourseStart" /></div>
+            <div class="cf-field cf-grow"><label>Öğrenci Listesi (Numara Ad Soyad)</label>
+            <textarea id="inClassList" placeholder="20241010  Ahmet Yılmaz&#10;20241011  Mehmet Demir"></textarea></div>
+            <div class="btn-row cf-actions">
                 <button class="btn-sm btn-save" onclick="saveCourseForm()">Kaydet / Güncelle</button>
                 <button id="btnDeleteCourse" class="btn-sm btn-cancel" style="display:none;" onclick="deleteCurrentCourse()">Dersi Sil</button>
                 <button class="btn-sm btn-settings" onclick="closeModal('modalAddCourse')">İptal</button>
@@ -879,6 +893,27 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
         });
     }
 
+    async function deleteAllData() {
+        if (isAttendanceActive) {
+            alert("Yoklama sürerken veriler silinemez. Önce yoklamayı bitirin.");
+            return;
+        }
+        if (!(await askConfirm("Tüm dersler, öğrenci listeleri, yoklama kayıtları ve Firebase/web adresi ayarları silinecek. Bu işlem geri alınamaz. Önce yedek almanız önerilir.", "Tümünü sil"))) return;
+        if (!(await askConfirm("Emin misiniz? Silinen veriler geri getirilemez.", "Evet, sil"))) return;
+
+        courseList = [];
+        activeCourse = null;
+        try {
+            localStorage.removeItem('CoursePrefs_courses_json');
+            localStorage.removeItem('cfg_firebase');
+            localStorage.removeItem('cfg_web');
+        } catch (e) { console.error(e); }
+
+        renderCourseSpinner();
+        closeModal('modalSettings');
+        alert("Tüm veriler silindi.");
+    }
+
     async function deleteCurrentCourse() {
         if (!activeCourse) return;
         if (!(await askConfirm(`${activeCourse.name} dersi ve tüm yoklama kayıtları silinecek.`, "Dersi sil"))) return;
@@ -1324,13 +1359,20 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
         const dateStr = `${dd}${mm}${yyyy}`;
         const fileName = `yoklama_${dateStr}.json`;
 
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ version: 2, settings: { firebaseUrl: getFirebaseUrl(), webUrl: getWebUrl() }, courses: courseList }, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", fileName);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
+        const jsonText = JSON.stringify({ version: 2, settings: { firebaseUrl: getFirebaseUrl(), webUrl: getWebUrl() }, courses: courseList }, null, 2);
+        (async () => {
+            try {
+                const dl = (window.claude && window.claude.use) ? await window.claude.use("downloads") : null;
+                if (dl) { await dl.save({ filename: fileName, data: jsonText }); return; }
+            } catch (e) { if (e && e.code === 'declined') return; console.error(e); }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(jsonText);
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", fileName);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        })();
     }
 
     function fitPrint() {
