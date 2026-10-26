@@ -154,6 +154,23 @@ body>*:not(#printArea){display:none!important}
 #printArea th,#printArea td{border:1px solid #cfd8dc}
 #printArea td:last-child,#printArea th:last-child{position:static}
 }
+
+/* Yoklama kağıdı (siyah-beyaz) */
+@media print{
+#printArea.signsheet{filter:grayscale(1)}
+#printArea.signsheet,#printArea.signsheet *{color:#000!important;background:#fff!important;font-family:Arial,Helvetica,sans-serif}
+#printArea.signsheet .sh-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
+#printArea.signsheet h1{font-size:17px;margin:0 0 4px}
+#printArea.signsheet .pmeta{font-size:11px;margin:0 0 3px}
+#printArea.signsheet .sh-qr{width:26mm;height:26mm;flex:none;display:block}
+#printArea.signsheet table{width:100%;page-break-inside:avoid;border-collapse:collapse;table-layout:fixed}
+#printArea.signsheet th,#printArea.signsheet td{border:1px solid #000;font-size:var(--fs,10.5px);padding:0 3px;height:var(--rh,8.2mm);line-height:1;text-align:left;overflow:hidden;white-space:nowrap}
+#printArea.signsheet th{font-weight:700;text-align:center;height:9mm;font-size:9px;line-height:1.1}
+#printArea.signsheet td.c{text-align:center}
+#printArea.signsheet table{border:1px solid #000;border-right:1px solid #000}
+#printArea.signsheet th:last-child,#printArea.signsheet td:last-child{border-right:1px solid #000!important}
+#printArea.signsheet tbody tr:nth-child(5n) td{border-bottom:1.6px solid #000}
+}
 input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;border:1px solid #c5ced7;border-radius:10px;background:var(--surface);color:var(--ink);margin-bottom:8px;color-scheme:light dark}
 #modalConfirm{z-index:1100}
 </style>
@@ -277,6 +294,9 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
             <input type="date" id="inCourseStart" /></div>
             <div class="cf-field cf-grow"><label>Öğrenci Listesi (Numara Ad Soyad)</label>
             <textarea id="inClassList" placeholder="20241010  Ahmet Yılmaz&#10;20241011  Mehmet Demir"></textarea></div>
+            <div class="btn-row" id="rowSignSheet" style="display:none;margin-bottom:8px">
+                <button class="btn-sm" onclick="generateSignSheet()">Yoklama kağıdı (PDF)</button>
+            </div>
             <div class="btn-row cf-actions">
                 <button class="btn-sm btn-save" onclick="saveCourseForm()">Kaydet / Güncelle</button>
                 <button id="btnDeleteCourse" class="btn-sm btn-cancel" style="display:none;" onclick="deleteCurrentCourse()">Dersi Sil</button>
@@ -805,6 +825,7 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
         document.getElementById('inInstructor').value = "";
         document.getElementById('inClassList').value = "";
         document.getElementById('btnDeleteCourse').style.display = 'none';
+        document.getElementById('rowSignSheet').style.display = 'none';
         openModal('modalAddCourse');
     }
 
@@ -825,6 +846,7 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
         }
         document.getElementById('inClassList').value = classText;
         document.getElementById('btnDeleteCourse').style.display = 'inline-block';
+        document.getElementById('rowSignSheet').style.display = 'flex';
         openModal('modalAddCourse');
     }
 
@@ -1389,12 +1411,69 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
     function generatePdfReport() {
         if (!activeCourse) { alert("Lütfen önce bir ders seçiniz!"); return; }
         const d = chartData();
+        document.getElementById('printArea').className = '';
         document.getElementById('printArea').innerHTML =
             `<h1>${esc(d.c.name)} - Devam Çizelgesi</h1>` +
             `<div class="pmeta">${d.c.instructor ? esc(d.c.instructor) + ' · ' : ''}${new Date().toLocaleDateString('tr-TR')} · ${esc(chartSummaryText(d))}</div>` +
             chartTableHtml(d, d.rows, true);
         fitPrint();
         window.print();
+    }
+
+    function generateSignSheet() {
+        if (!activeCourse) { alert("Lütfen önce bir ders seçiniz!"); return; }
+        const c = activeCourse;
+        const credit = Math.max(1, parseInt(c.credit) || 3);
+        const weekCols = 3;
+        const oneWeek = credit === 3; // 3 kredi: tek haftalık (her saat için imza); diğerleri: 3 haftalık (her hafta tek imza)
+        const students = c.students || [];
+        const fullUrl = `${getWebUrl()}?session=${c.id}&db=${getFirebaseUrl()}`;
+
+        // QR -> resim (siyah-beyaz)
+        const tmp = document.createElement('div');
+        tmp.style.cssText = 'position:fixed;left:-9999px;top:0';
+        document.body.appendChild(tmp);
+        new QRCode(tmp, { text: fullUrl, width: 300, height: 300, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+        const cv = tmp.querySelector('canvas');
+        const img = tmp.querySelector('img');
+        const qrSrc = cv ? cv.toDataURL('image/png') : (img ? img.src : '');
+        tmp.remove();
+
+        const rowsNeeded = Math.max(students.length, 1);
+        const landscape = false;
+        const usableH = (landscape ? 186 : 273) - 40;          // mm: kenar boşlukları ve üst bilgi düşüldü
+        const rh = Math.min(8.2, usableH / rowsNeeded * 0.97);  // satır yüksekliği (mm)
+        const fs = Math.max(5.5, Math.min(10.5, rh * 3.78 * 0.55)); // yazı boyutu (px)
+        const usableW = landscape ? 273 : 186;                 // mm
+        const noMm = 9, numMm = 24;
+        const sigMm = Math.min(24, (usableW - noMm - numMm - 55) / weekCols); // imza sütunu (en fazla 24 mm)
+        const nameMm = Math.min(70, usableW - noMm - numMm - sigMm * weekCols);
+        const tableMm = noMm + numMm + nameMm + sigMm * weekCols;
+        let cols = `<col style="width:${noMm}mm"><col style="width:${numMm}mm"><col style="width:${nameMm.toFixed(1)}mm">`;
+        let head = `<th>Sıra</th><th>Öğrenci No</th><th>Ad Soyad</th>`;
+        for (let i = 1; i <= weekCols; i++) { cols += `<col style="width:${sigMm.toFixed(1)}mm">`; head += `<th></th>`; }
+        let body = '';
+        for (let i = 0; i < rowsNeeded; i++) {
+            const s = students[i];
+            body += `<tr><td class="c">${i + 1}</td><td class="c">${s ? esc(s.studentNo) : ''}</td><td>${s ? esc(s.fullName) : ''}</td>` + '<td></td>'.repeat(weekCols) + '</tr>';
+        }
+
+        const pa = document.getElementById('printArea');
+        pa.className = 'signsheet';
+        pa.innerHTML =
+            `<div style="width:${tableMm.toFixed(1)}mm;margin:0 auto"><div class="sh-head"><div>` +
+            `<h1>${esc(c.name)} - Yoklama Listesi</h1>` +
+            `<div class="pmeta">${c.instructor ? 'Öğretim Elemanı: ' + esc(c.instructor) : ''}</div>` +
+            `<div class="pmeta">Ders Kredisi: ${credit} saat &nbsp;·&nbsp; ${oneWeek ? 'Tek haftalık liste (her saat için imza) &nbsp;·&nbsp; Tarih: ......../......../............' : '3 haftalık liste (her hafta için tek imza)'}</div>` +
+            `</div>${qrSrc ? `<img class="sh-qr" src="${qrSrc}" alt="QR">` : ''}</div>` +
+            `<table style="width:${tableMm.toFixed(1)}mm;--rh:${rh.toFixed(2)}mm;--fs:${fs.toFixed(1)}px"><colgroup>${cols}</colgroup><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+
+        let st = document.getElementById('pageStyle');
+        if (!st) { st = document.createElement('style'); st.id = 'pageStyle'; document.head.appendChild(st); }
+        st.textContent = `@page{size:A4 ${landscape ? 'landscape' : 'portrait'};margin:12mm}`;
+        pa.style.cssText = '';
+        window.onafterprint = () => { pa.className = ''; window.onafterprint = null; };
+        setTimeout(() => window.print(), 50);
     }
 
     ['modalQr', 'modalHistory', 'modalChart', 'modalSettings'].forEach(id => {
