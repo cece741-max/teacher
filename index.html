@@ -162,11 +162,11 @@ body>*:not(#printArea){display:none!important}
 #printArea.signsheet h1{font-size:17px;margin:0 0 4px}
 #printArea.signsheet .pmeta{font-size:11px;margin:0 0 3px}
 #printArea.signsheet .sh-qr{width:26mm;height:26mm;flex:none;display:block}
-#printArea.signsheet table{width:100%;page-break-inside:avoid;border-collapse:collapse;table-layout:fixed}
+#printArea.signsheet table{box-sizing:border-box;width:100%;page-break-inside:avoid;border-collapse:collapse;table-layout:fixed}
 #printArea.signsheet th,#printArea.signsheet td{border:1px solid #000;font-size:var(--fs,10.5px);padding:0 3px;height:var(--rh,8.2mm);line-height:1;text-align:left;overflow:hidden;white-space:nowrap}
 #printArea.signsheet th{font-weight:700;text-align:center;height:9mm;font-size:9px;line-height:1.1}
 #printArea.signsheet td.c{text-align:center}
-#printArea.signsheet table{border:1px solid #000;border-right:1px solid #000}
+#printArea.signsheet table{border:1px solid #000}
 #printArea.signsheet th:last-child,#printArea.signsheet td:last-child{border-right:1px solid #000!important}
 #printArea.signsheet tbody tr:nth-child(5n) td{border-bottom:1.6px solid #000}
 }
@@ -689,7 +689,7 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
             payload.location = {
                 lat: teacherLoc.lat,
                 lng: teacherLoc.lng,
-                radiusMeters: 70
+                radiusMeters: 100000 // sınırlama yok: mesafe yalnızca bilgi olarak gösterilir
             };
         }
 
@@ -1469,9 +1469,9 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
         const usableW = landscape ? 273 : 186;                 // mm
         const noMm = 9, numMm = 24;
         const sigMm = Math.min(24, (usableW - noMm - numMm - 55) / weekCols); // imza sütunu (en fazla 24 mm)
-        const nameMm = Math.min(70, usableW - noMm - numMm - sigMm * weekCols);
+        const nameMm = Math.min(60, usableW - noMm - numMm - sigMm * weekCols);
         const tableMm = noMm + numMm + nameMm + sigMm * weekCols;
-        let cols = `<col style="width:${noMm}mm"><col style="width:${numMm}mm"><col style="width:${nameMm.toFixed(1)}mm">`;
+        let cols = `<col style="width:${noMm}mm"><col style="width:${numMm}mm"><col>`;
         let head = `<th>Sıra</th><th>Öğrenci No</th><th>Ad Soyad</th>`;
         for (let i = 1; i <= weekCols; i++) { cols += `<col style="width:${sigMm.toFixed(1)}mm">`; head += `<th style="font-size:8px">..../..../${new Date().getFullYear()}</th>`; }
         let body = '';
@@ -1483,12 +1483,12 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
         const pa = document.getElementById('printArea');
         pa.className = 'signsheet';
         pa.innerHTML =
-            `<div style="width:${tableMm.toFixed(1)}mm;margin:0 auto;height:${landscape ? 170 : 255}mm;overflow:hidden"><div class="sh-head"><div>` +
+            `<div style="box-sizing:content-box;width:${tableMm.toFixed(1)}mm;padding:0 2mm;margin:0 auto;height:${landscape ? 170 : 255}mm;overflow:hidden"><div style="width:${tableMm.toFixed(1)}mm"><div class="sh-head"><div>` +
             `<h1>${esc(c.name)} - Yoklama Listesi</h1>` +
             `<div class="pmeta">${c.instructor ? 'Öğretim Elemanı: ' + esc(c.instructor) : ''}</div>` +
             `<div class="pmeta">Ders Kredisi: ${credit} saat &nbsp;·&nbsp; ${oneWeek ? 'Tek haftalık liste (her saat için imza)' : '3 haftalık liste (her hafta için tek imza)'}</div>` +
             `</div>${qrSrc ? `<div style="width:26mm;height:26mm;flex:none;overflow:hidden"><img class="sh-qr" src="${qrSrc}" alt="QR" width="98" height="98" style="width:26mm;height:26mm;max-width:26mm;max-height:26mm;display:block"></div>` : ''}</div>` +
-            `<table style="width:${tableMm.toFixed(1)}mm;--rh:${rh.toFixed(2)}mm;--fs:${fs.toFixed(1)}px"><colgroup>${cols}</colgroup><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+            `<table style="width:100%;--rh:${rh.toFixed(2)}mm;--fs:${fs.toFixed(1)}px"><colgroup>${cols}</colgroup><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
 
         let st = document.getElementById('pageStyle');
         if (!st) { st = document.createElement('style'); st.id = 'pageStyle'; document.head.appendChild(st); }
