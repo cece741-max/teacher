@@ -28,7 +28,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .field-label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
 select,input[type=text],input[type=number],textarea{width:100%;min-height:48px;padding:12px 14px;font-size:16px;border:1px solid #c5ced7;border-radius:10px;background:var(--surface);color:var(--ink);margin-bottom:8px}
 textarea{min-height:120px}
-.course-row{display:block;width:100%;text-align:left;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--muted);margin-bottom:14px;min-height:44px}
+
 .btn-start{width:100%;min-height:56px;background:var(--primary);color:#fff;border:0;border-radius:12px;font-size:18px;font-weight:700;margin-bottom:12px}
 .btn-start:active{background:var(--primary-d)}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -82,7 +82,7 @@ body:not(.session-live) .filters,body:not(.session-live) .list-head{display:none
 @media print{.topbar,.tiles,.filters,.action-bar{display:none}}
 
 .brand{min-width:0;flex:1}.brand>*{flex:none}.brand-course{display:flex;flex-direction:column;min-width:0;flex:1 1 auto;margin-left:4px;padding-left:12px;border-left:1px solid var(--line);line-height:1.2}.brand-course b{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand-course span{font-size:12px;font-weight:500;color:var(--muted)}.brand-course:empty{display:none}#courseHero{display:none}.top-actions{margin-left:10px}
-.course-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.course-head .field-label{margin-bottom:0}.edit-link{border:0;background:transparent;color:var(--primary);font-size:14px;font-weight:600;padding:8px 0 8px 12px;min-height:40px}#tvCourseDetails{display:none}
+.course-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.course-head .field-label{margin-bottom:0}.edit-link{border:0;background:transparent;color:var(--primary);font-size:14px;font-weight:600;padding:8px 0 8px 12px;min-height:40px}
 #modalAddCourse .modal-body{display:flex;flex-direction:column;height:92vh;height:92dvh;max-height:92vh;padding-top:18px}
 #modalAddCourse .modal-title{margin-bottom:6px}
 #modalAddCourse .cf-field label{margin:6px 0 3px;font-size:12px}
@@ -91,8 +91,8 @@ body:not(.session-live) .filters,body:not(.session-live) .list-head{display:none
 #modalAddCourse .cf-grow{flex:1;display:flex;flex-direction:column;min-height:160px}
 #modalAddCourse .cf-grow textarea{flex:1;min-height:120px;margin-bottom:0;resize:none}
 #modalAddCourse .cf-actions{margin:10px 0 0;flex:none}
-.hero{margin-bottom:14px}.hero b{display:block;font-size:22px;letter-spacing:-.01em;line-height:1.2}.hero span{font-size:14px;color:var(--muted)}
-.tile-add{grid-column:1/-1;border-style:dashed;color:var(--primary)}
+
+
 .sticky-top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-top:6px}
 #tvStatus.live{width:100%;min-height:44px;background:var(--ok-bg);border-color:var(--ok);color:var(--ok)!important}
 #tvStatus.live::before{background:var(--ok);animation:pulse 1.6s infinite}
@@ -157,7 +157,6 @@ body>*:not(#printArea){display:none!important}
 
 /* Yoklama kağıdı (siyah-beyaz) */
 @media print{
-#printArea.signsheet{filter:grayscale(1)}
 #printArea.signsheet,#printArea.signsheet *{color:#000!important;background:#fff!important;font-family:Arial,Helvetica,sans-serif}
 #printArea.signsheet .sh-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
 #printArea.signsheet h1{font-size:17px;margin:0 0 4px}
@@ -195,10 +194,8 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
     </section>
 
     <section id="setupPanel" class="card-panel">
-        <div id="courseHero" class="hero"></div>
         <div class="course-head"><label for="courseSelect" class="field-label">Ders</label><button type="button" class="edit-link" onclick="openEditCourseModal()">Dersi düzenle</button></div>
         <select id="courseSelect" onchange="onCourseSelected()"></select>
-        <button type="button" class="course-row" id="tvCourseDetails" onclick="openEditCourseModal()">Ders bilgileri: Seçilmedi</button>
         <button class="btn-start" onclick="startAttendanceSession()">Yoklamayı başlat</button>
         <div class="tiles">
             <button class="tile" onclick="showHistoryModal()">Geçmiş</button>
@@ -405,8 +402,7 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
         if (courseList.length === 0) {
             select.innerHTML = '<option value="">Ders Bulunmuyor (Yeni Ekle veya Yükle)</option>';
             activeCourse = null;
-            renderCourseDetails();
-            renderStudentList();
+                renderStudentList();
             return;
         }
         courseList.forEach((c, idx) => {
@@ -419,7 +415,6 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
             activeCourse = courseList[0];
         }
         select.value = courseList.indexOf(activeCourse);
-        renderCourseDetails();
         renderStudentList();
     }
 
@@ -430,18 +425,9 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
         } else {
             activeCourse = null;
         }
-        renderCourseDetails();
         renderStudentList();
     }
 
-    function renderCourseDetails() {
-        const tv = document.getElementById('tvCourseDetails');
-        if (!activeCourse) {
-            tv.innerText = "Ders bilgileri: Seçilmedi";
-        } else {
-            tv.innerText = `${activeCourse.name} (${activeCourse.credit} Saat) · Düzenle`;
-        }
-    }
 
     const esc = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     let studentFilter = 'all';
@@ -464,6 +450,7 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
 
         if (!total) {
             container.innerHTML = '<div class="empty">Henüz öğrenci yok. Ders bilgilerinden sınıf listesini ekleyin.</div>';
+            refreshUI();
             return;
         }
 
@@ -488,7 +475,7 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
 
             const item = document.createElement('div');
             item.className = 'student-item' + (s.isPresent ? ' present' : '');
-            item.onclick = () => toggleStudentManual(s);
+            item.onclick = () => onStudentTap(s);
             item.innerHTML = `
                 <span class="student-index">${idx + 1}</span>
                 <div class="student-info">
@@ -524,6 +511,7 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
             liveInput.focus();
             if (liveDraft === null) liveInput.select(); else liveInput.setSelectionRange(liveInput.value.length, liveInput.value.length);
         }
+        refreshUI();
     }
 
     let liveEditNo = null, liveDraft = null;
@@ -572,6 +560,51 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
         student.hours = null;
         if (!student.isPresent) student.distanceMeters = null;
         renderStudentList();
+    }
+
+    // Öğrenci satırına dokunma: QR ile gelen için onay, diğerlerinde "Geri al" bildirimi
+    async function onStudentTap(s) {
+        if (!isAttendanceActive) { toggleStudentManual(s); return; }
+        if (s.isPresent && s.distanceMeters != null) {
+            if (await askConfirm(s.fullName + ' QR ile katılmış. Gelmedi olarak işaretlensin mi?', 'Katılımı kaldır')) toggleStudentManual(s);
+            return;
+        }
+        const was = s.isPresent, d = s.distanceMeters, hh = s.hours;
+        toggleStudentManual(s);
+        showToast(s.fullName + (was ? ' gelmedi' : ' geldi') + ' olarak işaretlendi', () => {
+            s.isPresent = was; s.distanceMeters = d; s.hours = hh; renderStudentList();
+        });
+    }
+
+    let toastTimer;
+    function showToast(msg, undo) {
+        const t = document.getElementById('toast');
+        document.getElementById('toastMsg').textContent = msg;
+        t.hidden = false;
+        document.getElementById('toastUndo').onclick = () => { undo(); t.hidden = true; };
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { t.hidden = true; }, 4000);
+    }
+
+    // Ekran durumu: her listeleme sonunda çağrılır
+    function refreshUI() {
+        const byId = id => document.getElementById(id);
+        const has = Array.isArray(courseList) && courseList.length > 0;
+        document.body.classList.toggle('no-course', !has);
+        byId('emptyCourse').hidden = has;
+        byId('tvStatus').classList.toggle('live', !!isAttendanceActive);
+        document.body.classList.toggle('session-live', !!isAttendanceActive);
+        byId('btnShowQr').style.display = isAttendanceActive ? '' : 'none';
+        const sts = (activeCourse && activeCourse.students) || [];
+        const week = activeCourse ? (activeCourse.pastSessions ? activeCourse.pastSessions.length : 0) + 1 : 0;
+        const bc = activeCourse ? `<b>${esc(activeCourse.name)}</b><span>${week}. hafta · ${sts.length} öğrenci</span>` : '';
+        if (byId('brandCourse').innerHTML !== bc) byId('brandCourse').innerHTML = bc;
+        const p = sts.filter(x => x.isPresent).length;
+        const c = { all: sts.length, in: p, out: sts.length - p }, L = { all: 'Tümü', in: 'Gelen', out: 'Gelmeyen' };
+        document.querySelectorAll('#segFilter button').forEach(b => {
+            const t = L[b.dataset.f] + ' ' + c[b.dataset.f];
+            if (b.textContent !== t) b.textContent = t;
+        });
     }
 
     // Attendance Start / Save / Cancel
@@ -1106,15 +1139,6 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
         if (openInput) { openItem.scrollIntoView({ block: 'nearest' }); openInput.focus(); openInput.select(); }
     }
 
-    function changeStudentHours(studentNo, delta) {
-        const maxCredit = activeCourse.credit || 3;
-        let current = editingHoursMap[studentNo] || 0;
-        current += delta;
-        if (current < 0) current = 0;
-        if (current > maxCredit) current = maxCredit;
-        editingHoursMap[studentNo] = current;
-        renderEditSessionStudents();
-    }
 
     function saveEditedSession() {
         commitEditInput();
@@ -1441,7 +1465,7 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
 
         const rowsNeeded = Math.max(students.length, 1);
         const landscape = false;
-        const usableH = (landscape ? 186 : 273) - 40;          // mm: kenar boşlukları ve üst bilgi düşüldü
+        const usableH = (landscape ? 170 : 250) - 40;          // mm: kenar boşlukları ve üst bilgi düşüldü
         const rh = Math.min(8.2, usableH / rowsNeeded * 0.97);  // satır yüksekliği (mm)
         const fs = Math.max(5.5, Math.min(10.5, rh * 3.78 * 0.55)); // yazı boyutu (px)
         const usableW = landscape ? 273 : 186;                 // mm
@@ -1451,7 +1475,7 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
         const tableMm = noMm + numMm + nameMm + sigMm * weekCols;
         let cols = `<col style="width:${noMm}mm"><col style="width:${numMm}mm"><col style="width:${nameMm.toFixed(1)}mm">`;
         let head = `<th>Sıra</th><th>Öğrenci No</th><th>Ad Soyad</th>`;
-        for (let i = 1; i <= weekCols; i++) { cols += `<col style="width:${sigMm.toFixed(1)}mm">`; head += `<th></th>`; }
+        for (let i = 1; i <= weekCols; i++) { cols += `<col style="width:${sigMm.toFixed(1)}mm">`; head += `<th style="font-size:8px">..../..../${new Date().getFullYear()}</th>`; }
         let body = '';
         for (let i = 0; i < rowsNeeded; i++) {
             const s = students[i];
@@ -1461,11 +1485,11 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
         const pa = document.getElementById('printArea');
         pa.className = 'signsheet';
         pa.innerHTML =
-            `<div style="width:${tableMm.toFixed(1)}mm;margin:0 auto"><div class="sh-head"><div>` +
+            `<div style="width:${tableMm.toFixed(1)}mm;margin:0 auto;height:${landscape ? 170 : 255}mm;overflow:hidden"><div class="sh-head"><div>` +
             `<h1>${esc(c.name)} - Yoklama Listesi</h1>` +
             `<div class="pmeta">${c.instructor ? 'Öğretim Elemanı: ' + esc(c.instructor) : ''}</div>` +
-            `<div class="pmeta">Ders Kredisi: ${credit} saat &nbsp;·&nbsp; ${oneWeek ? 'Tek haftalık liste (her saat için imza) &nbsp;·&nbsp; Tarih: ......../......../............' : '3 haftalık liste (her hafta için tek imza)'}</div>` +
-            `</div>${qrSrc ? `<img class="sh-qr" src="${qrSrc}" alt="QR">` : ''}</div>` +
+            `<div class="pmeta">Ders Kredisi: ${credit} saat &nbsp;·&nbsp; ${oneWeek ? 'Tek haftalık liste (her saat için imza)' : '3 haftalık liste (her hafta için tek imza)'}</div>` +
+            `</div>${qrSrc ? `<div style="width:26mm;height:26mm;flex:none;overflow:hidden"><img class="sh-qr" src="${qrSrc}" alt="QR" width="98" height="98" style="width:26mm;height:26mm;max-width:26mm;max-height:26mm;display:block"></div>` : ''}</div>` +
             `<table style="width:${tableMm.toFixed(1)}mm;--rh:${rh.toFixed(2)}mm;--fs:${fs.toFixed(1)}px"><colgroup>${cols}</colgroup><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 
         let st = document.getElementById('pageStyle');
@@ -1486,43 +1510,5 @@ input[type=date]{width:100%;min-height:48px;padding:12px 14px;font-size:16px;bor
     renderCourseSpinner();
 </script>
 
-<script>
-/* Görünüm katmanı: mevcut fonksiyonlara dokunmaz, yalnızca ekranı günceller */
-(function(){
-  const $=id=>document.getElementById(id);
-  function ui(){
-    const has=Array.isArray(courseList)&&courseList.length>0;
-    document.body.classList.toggle('no-course',!has);
-    $('emptyCourse').hidden=has;
-    $('tvStatus').classList.toggle('live',!!isAttendanceActive);
-    document.body.classList.toggle('session-live',!!isAttendanceActive);
-    $('btnShowQr').style.display=isAttendanceActive?'':'none';
-    const sts=(activeCourse&&activeCourse.students)||[];
-    const h=activeCourse?`<b>${esc(activeCourse.name)}</b><span>${(activeCourse.pastSessions?activeCourse.pastSessions.length:0)+1}. hafta · ${sts.length} öğrenci</span>`:'';
-    if($('courseHero').innerHTML!==h)$('courseHero').innerHTML=h;
-    const bc=activeCourse?`<b>${esc(activeCourse.name)}</b><span>${(activeCourse.pastSessions?activeCourse.pastSessions.length:0)+1}. hafta</span>`:'';
-    if($('brandCourse').innerHTML!==bc)$('brandCourse').innerHTML=bc;
-    const p=sts.filter(s=>s.isPresent).length,c={all:sts.length,in:p,out:sts.length-p},L={all:'Tümü',in:'Gelen',out:'Gelmeyen'};
-    document.querySelectorAll('#segFilter button').forEach(b=>{const t=L[b.dataset.f]+' '+c[b.dataset.f];if(b.textContent!==t)b.textContent=t});
-  }
-  let tt;
-  function toast(msg,undo){const t=$('toast');$('toastMsg').textContent=msg;t.hidden=false;$('toastUndo').onclick=()=>{undo();t.hidden=true};clearTimeout(tt);tt=setTimeout(()=>{t.hidden=true},4000)}
-  $('studentContainer').addEventListener('click',async e=>{
-    if(e.target.closest('.status-badge'))return;
-    const it=e.target.closest('.student-item');if(!it||!isAttendanceActive)return;
-    const s=activeCourse.students[parseInt(it.querySelector('.student-index').textContent,10)-1];if(!s)return;
-    if(s.isPresent&&s.distanceMeters!=null){
-      e.stopImmediatePropagation();
-      if(await askConfirm(s.fullName+' QR ile katılmış. Gelmedi olarak işaretlensin mi?','Katılımı kaldır'))toggleStudentManual(s);
-      return;
-    }
-    const was=s.isPresent,d=s.distanceMeters,hh=s.hours;
-    setTimeout(()=>toast(s.fullName+(was?' gelmedi':' geldi')+' olarak işaretlendi',()=>{s.isPresent=was;s.distanceMeters=d;s.hours=hh;renderStudentList()}),0);
-  },true);
-  const mo=new MutationObserver(ui);
-  ['studentContainer','tvStatus','tvCourseDetails','courseSelect'].forEach(i=>mo.observe($(i),{childList:true,subtree:true,characterData:true}));
-  ui();
-})();
-</script>
 </body>
 </html>
