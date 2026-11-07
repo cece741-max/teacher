@@ -5,56 +5,105 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#2748a3">
-<title>Mobil Yoklama - Öğretmen Paneli</title>
+<meta name="theme-color" content="#14254b">
+<title>Mobil Yoklama - Öğretim Elemanı Paneli</title>
 <style>
-:root{--bg:#eef1f4;--sf:#fff;--soft:#f6f8fa;--ink:#16212b;--mut:#5d6b78;--line:#dde3e9;--pr:#2748a3;--ok:#1f7a52;--okb:#e8f5ee;--bad:#c0392f}
-@media(prefers-color-scheme:dark){:root{--bg:#10161d;--sf:#18212b;--soft:#1f2a36;--ink:#e8edf2;--mut:#9aa8b5;--line:#2a3745;--pr:#5b7fe0;--ok:#3cb27c;--okb:#16322a;--bad:#ef6f64}}
+:root{--bg:#eceff5;--sf:#fff;--soft:#f3f5f9;--ink:#14213d;--mut:#5f6b80;--line:#dfe4ec;--pr:#1a2f5e;--hd:#14254b;--gold:#c0983f;--ok:#1f7a52;--okb:#e9f5ee;--bad:#b83a30;--serif:Charter,"Iowan Old Style","Palatino Linotype",Georgia,serif}
+@media(prefers-color-scheme:dark){:root{--bg:#0d131d;--sf:#161f2d;--soft:#1c2736;--ink:#e8ecf3;--mut:#93a1b5;--line:#263246;--pr:#4f74d9;--hd:#0a1428;--gold:#d4ad5c;--ok:#3cb27c;--okb:#14302a;--bad:#ef6f64}}
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-body{background:var(--bg);color:var(--ink);font-size:16px;max-width:600px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 14px calc(100px + env(safe-area-inset-bottom))}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-size:16px;line-height:1.4;max-width:600px;min-height:100vh;margin:0 auto;padding:0 14px calc(100px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--hd);z-index:19}
 button{font:inherit;cursor:pointer;color:inherit}
-.top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
-.brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;min-width:0}
-.brand i{width:12px;height:24px;border-radius:3px;background:var(--pr);flex:none}
-#bc{display:flex;flex-direction:column;border-left:1px solid var(--line);padding-left:10px;line-height:1.2;min-width:0}
-#bc b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#bc span{font-size:12px;font-weight:500;color:var(--mut)}
-.hb{min-height:40px;padding:0 14px;border:1px solid var(--line);background:var(--sf);border-radius:10px;font-size:14px;font-weight:600}
-.card{background:var(--sf);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
-label{display:block;font-size:13px;font-weight:600;color:var(--mut);margin:10px 0 5px}
-select,input,textarea{width:100%;min-height:46px;padding:10px 12px;font-size:16px;border:1px solid var(--line);border-radius:10px;background:var(--sf);color:var(--ink)}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.si:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* üst bant */
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 -14px 16px;padding:calc(14px + env(safe-area-inset-top)) 16px 16px;background:var(--hd);color:#fff;border-bottom:3px solid var(--gold)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand i{flex:none;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--gold);box-shadow:inset 0 0 0 3px var(--hd),inset 0 0 0 4px rgba(212,173,92,.55);display:grid;place-items:center;font:700 17px var(--serif);font-style:normal;color:var(--gold)}
+.brand i::before{content:"Y"}
+#bc{display:flex;flex-direction:column;min-width:0;line-height:1.2}
+#bc b{font:600 18px var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bc span{font-size:12.5px;color:rgba(255,255,255,.7);margin-top:2px}
+.top>div:last-child{display:flex;gap:6px;flex:none}
+.hb{min-height:36px;padding:0 14px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;border-radius:99px;font-size:13.5px;font-weight:600}
+
+/* kartlar ve form */
+.card{background:var(--sf);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px}
+.card h2{font:600 22px var(--serif)}
+label{display:block;font-size:13px;font-weight:600;color:var(--mut);margin:12px 0 6px}
+select,input,textarea{width:100%;min-height:48px;padding:10px 12px;font-size:16px;border:1px solid var(--line);border-radius:10px;background:var(--soft);color:var(--ink)}
+select{appearance:none;-webkit-appearance:none;padding-right:38px;font-family:var(--serif);font-weight:600;font-size:17px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' fill='none' stroke='%238a96a8' stroke-width='2'%3E%3Cpath d='M1 1l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
 textarea{min-height:140px;resize:vertical}
-.start{width:100%;min-height:56px;background:var(--pr);color:#fff;border:0;border-radius:12px;font-size:18px;font-weight:700;margin:12px 0}
-.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.btn{min-height:44px;padding:0 14px;font-size:14px;font-weight:600;border-radius:10px;border:1px solid var(--line);background:var(--soft)}
-.btn.s{background:var(--pr);border-color:var(--pr);color:#fff}.btn.d{background:var(--sf);border-color:#e3b3ae;color:var(--bad)}
+.start{width:100%;min-height:54px;background:var(--pr);color:#fff;border:0;border-radius:12px;font-size:17px;font-weight:700;margin:14px 0 18px}
+.btn{min-height:44px;padding:0 14px;font-size:14px;font-weight:600;border-radius:10px;border:1px solid var(--line);background:var(--sf)}
+.btn.s{background:var(--pr);border-color:var(--pr);color:#fff}
+.btn.d{background:var(--sf);border-color:rgba(184,58,48,.4);color:var(--bad)}
 .row{display:flex;gap:8px;margin-top:10px}.row .btn{flex:1}
 .link{border:0;background:none;color:var(--pr);font-weight:600;font-size:14px;min-height:36px}
 .ch{display:flex;justify-content:space-between;align-items:center}.ch label{margin:0}
-.sticky{position:sticky;top:env(safe-area-inset-top,0);z-index:20;background:var(--bg);padding:6px 0 2px}
-#st{display:block;font-size:13px;font-weight:600;padding:10px 12px;border-radius:12px;background:var(--okb);border:1px solid var(--ok);color:var(--ok);margin-bottom:10px}
-#st.err{background:var(--sf);border-color:var(--bad);color:var(--bad)}
-.lh{display:flex;align-items:center;gap:14px;margin-bottom:8px}.lh strong{font-size:28px}.lh span{font-size:14px;color:var(--mut)}
-.bar{flex:1;height:8px;background:var(--line);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
-.seg{display:flex;background:var(--line);border-radius:10px;padding:3px;margin-bottom:8px}
-.seg button{flex:1;min-height:36px;border:0;background:none;border-radius:8px;font-size:14px;font-weight:600;color:var(--mut)}.seg button.on{background:var(--sf);color:var(--ink)}
-.list{background:var(--sf);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.si{display:flex;align-items:center;gap:8px;min-height:42px;padding:3px 10px 3px 8px;border-bottom:1px solid var(--line);border-left:4px solid transparent;cursor:pointer;user-select:none}
+#setup{overflow:hidden}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);margin:0 -18px -18px;border-top:1px solid var(--line)}
+.tiles .btn{border:0;border-radius:0;color:var(--pr);min-height:54px}
+.tiles .btn+.btn{border-left:1px solid var(--line)}
+.hint{font-size:13px;color:var(--mut)}
+.em{padding:28px 16px;text-align:center;color:var(--mut);font-size:14px}
+
+/* canlı yoklama */
+.sticky{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--sf);margin:-16px -14px 12px;padding:12px 14px 10px;border-bottom:1px solid var(--line)}
+#st{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ok);margin-bottom:6px}
+#st::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
+#st.err{color:var(--bad)}
+.lh{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.lh strong{font:600 32px/1 var(--serif);font-variant-numeric:tabular-nums}
+.lh span{font-size:13px;color:var(--mut)}
+.bar{flex:1;height:6px;background:var(--line);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+.seg{display:flex;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{flex:1;min-height:36px;border:0;background:none;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--mut)}
+.seg button.on{background:var(--pr);color:#fff}
+.list{background:var(--sf);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.si{display:flex;align-items:center;gap:10px;min-height:48px;padding:4px 12px 4px 10px;border-bottom:1px solid var(--line);border-left:4px solid transparent;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
 .si:last-child{border-bottom:0}.si.on{background:var(--okb);border-left-color:var(--ok)}
-.no{font-size:13px;color:var(--mut);min-width:9ch;font-variant-numeric:tabular-nums}.nm{flex:1;min-width:0;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.db{font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:9px;white-space:nowrap}.db.g{background:#d3efe0;color:#16603f}.db.r{background:#fbdcd8;color:#9b2c24}.db.m{background:#e1e7f5;color:#27408b}
-.hb2{min-width:34px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:99px;font-size:13px;background:var(--line);color:var(--mut)}.hb2.ok{background:var(--ok);color:#fff}
-.em{padding:26px 16px;text-align:center;color:var(--mut);font-size:14px}
+.no{font-size:12.5px;color:var(--mut);min-width:9ch;font-variant-numeric:tabular-nums}
+.nm{flex:1;min-width:0;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.db{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:9px;white-space:nowrap}.db.g{background:#d3efe0;color:#16603f}.db.r{background:#fbdcd8;color:#9b2c24}.db.m{background:#e1e7f5;color:#27408b}
+.hb2{min-width:34px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:99px;font-size:13px;font-weight:700;border:1.5px solid var(--line);color:var(--mut)}
+.hb2.ok{background:var(--ok);border-color:var(--ok);color:#fff}
 .abar{display:none;position:fixed;left:0;right:0;bottom:0;max-width:600px;margin:0 auto;gap:10px;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:var(--sf);border-top:1px solid var(--line);z-index:50}
 .abar .btn{min-height:52px;font-size:16px}
-.ov{display:none;position:fixed;inset:0;background:rgba(10,18,28,.5);justify-content:center;align-items:flex-end;z-index:1000}
-.mb{background:var(--sf);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom))}
-.mt{font-size:18px;font-weight:700;margin-bottom:6px}.hint{font-size:13px;color:var(--mut)}
+
+/* alt paneller */
+.ov{display:none;position:fixed;inset:0;background:rgba(10,18,32,.55);justify-content:center;align-items:flex-end;z-index:1000}
+.mb{position:relative;background:var(--sf);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:26px 18px calc(20px + env(safe-area-inset-bottom))}
+.mb::before{content:"";position:absolute;top:8px;left:50%;width:36px;height:4px;margin-left:-18px;border-radius:2px;background:var(--line)}
+.mt{font:600 21px/1.25 var(--serif);margin-bottom:6px}
 .hi{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 body:not(.live) #liveArea,body:not(.live) #bQr{display:none}body.live #setup,body.live #bSet{display:none}body.live .abar{display:flex}
 body.nc #setup,body.nc #liveArea{display:none}
-table{border-collapse:collapse;font-size:12px;text-align:center;width:100%}th{background:var(--pr);color:#fff;padding:5px}td{padding:5px;border-bottom:1px solid var(--line)}
-.x{overflow-x:auto;max-height:70vh}.l{text-align:left}
+table{border-collapse:collapse;font-size:12px;text-align:center;width:100%}th{background:var(--pr);color:#fff;padding:6px 5px;font-weight:600}td{padding:6px 5px;border-bottom:1px solid var(--line)}
+.x{overflow-x:auto;max-height:70vh;border:1px solid var(--line);border-radius:10px}.x th{position:sticky;top:0}.l{text-align:left}
+@media(prefers-reduced-motion:no-preference){
+#st:not(.err)::before{animation:pl 1.8s ease-in-out infinite}@keyframes pl{50%{opacity:.25}}
+.mb{animation:up .22s ease-out}@keyframes up{from{transform:translateY(20px);opacity:0}}}
+/* ana sayfa: başlık kartın üst bölümü */
+body:not(.live){padding-top:calc(14px + env(safe-area-inset-top))}
+body:not(.live)::before{background:var(--bg)}
+body:not(.live) .top{margin:0;padding:16px;border-radius:16px 16px 0 0}
+body:not(.live) #setup,body:not(.live) #empty{border-top:0;border-radius:0 0 16px 16px}
+/* tam ekran */
+body.live{max-width:none;padding:0;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+body.live .top{margin:0;flex:none}
+body.live #liveArea{flex:1;min-height:0;overflow-y:auto;padding:0 14px calc(100px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+body.live .sticky{margin:0 -14px 12px;top:0}
+body.live .abar{max-width:none}
+.mb.full{max-width:none;max-height:none;height:100%;border-radius:0;display:flex;flex-direction:column;padding-top:calc(18px + env(safe-area-inset-top))}
+.mb.full::before{display:none}
+.eg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px}.eg>div{min-width:0}.eg label{margin-top:8px}.eg input{font-size:15px;padding:10px}
+.tg{display:flex;align-items:center;gap:10px;margin:12px 0 0;padding:11px 12px;background:var(--soft);border:1px solid var(--line);border-radius:10px;font-size:15px;color:var(--ink);cursor:pointer}.tg input{width:22px;min-height:22px;flex:none;accent-color:var(--pr)}
+.mb.full>*{flex-shrink:0}
+.mb.full>.row:last-child{position:sticky;bottom:0;background:var(--sf);padding:10px 0 6px;margin-top:auto}
+.mb.full .x{flex:1;max-height:none;min-height:0}
 #sheet{display:none;position:fixed;inset:0;z-index:1300;background:#d1d5db;overflow:auto;padding-bottom:20px}
 #sheet .sb{position:sticky;top:0;display:flex;gap:8px;padding:10px 12px;background:var(--sf);border-bottom:1px solid var(--line);z-index:2}#sheet .sb .btn{flex:1}
 #pg{background:#fff;color:#000;width:170mm;height:275mm;margin:12px auto;overflow:hidden;font-family:Arial,Helvetica,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.25)}
@@ -75,7 +124,7 @@ body>*:not(#sheet){display:none!important}
 </head>
 <body class="nc">
 <header class="top">
- <div class="brand"><i></i>Yoklama<span id="bc"></span></div>
+ <div class="brand"><i aria-hidden="true"></i><div id="bc"></div></div>
  <div><button class="hb" id="bSet" onclick="settings()">Ayarlar</button> <button class="hb" id="bQr" onclick="qr()">QR kod</button></div>
 </header>
 
@@ -126,7 +175,7 @@ const esc=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){return null}};
 const dbUrl=()=>(LS('cfg_firebase')||DEFAULT_DB).trim().replace(/\/+$/,'');
 const webUrl=()=>(LS('cfg_web')||DEFAULT_WEB).trim();
-let courses=[],cur=null,live=false,ver='',timer=null,filter='all',fails=0,es=null,riskOnly=false;
+let courses=[],cur=null,live=false,ver='',timer=null,filter='all',fails=0,es=null,riskOnly=false,endP=Promise.resolve();
 
 /* ---------- veri ---------- */
 function norm(){courses.forEach((c,i)=>{c.id=c.id||Date.now()+'_'+i;c.credit=+c.credit||3;c.totalWeeks=+c.totalWeeks||15;c.minAttendance=+c.minAttendance||70;c.students=c.students||[];c.pastSessions=c.pastSessions||[];c.students.forEach(s=>{s.isPresent=false;s.distanceMeters=null;s.hours=null;s.qr=false})})}
@@ -152,7 +201,7 @@ function render(){
  $('sum').textContent=p+' / '+ss.length;$('fill').style.width=ss.length?p/ss.length*100+'%':0;
  const L={all:'Tümü',in:'Gelen',out:'Gelmeyen'},N={all:ss.length,in:p,out:ss.length-p};
  document.querySelectorAll('#seg button').forEach(b=>{b.textContent=L[b.dataset.f]+' '+N[b.dataset.f];b.classList.toggle('on',b.dataset.f===filter)});
- $('bc').innerHTML=cur?`<b>${esc(cur.name)}</b><span>${cur.pastSessions.length+1}. hafta · ${ss.length} öğrenci</span>`:'';
+ $('bc').innerHTML=cur&&live?`<b>${esc(cur.name)}</b><span>${cur.pastSessions.length+1}. hafta · ${ss.length} öğrenci</span>`:'<b>Yoklama</b><span>Öğretim Elemanı Paneli</span>';
  const box=$('list');box.innerHTML='';
  if(!ss.length)box.innerHTML='<div class="em">Henüz öğrenci yok. Dersi düzenleyip listeyi ekleyin.</div>';
  ss.forEach(s=>{
@@ -163,7 +212,7 @@ function render(){
   d.innerHTML=`<span class="no">${esc(s.studentNo)}</span><span class="nm">${esc(s.fullName)}</span>${b}<b class="hb2 ${s.isPresent?'ok':''}">${h}</b>`;
   d.onclick=()=>tap(s);d.querySelector('b').onclick=e=>{e.stopPropagation();cycle(s)};box.appendChild(d)});
 }
-function openM(h){$('mb').innerHTML=h;$('ov').style.display='flex'}
+function openM(h,full){$('mb').className='mb'+(full?' full':'');$('mb').innerHTML=h;$('ov').style.display='flex'}
 function closeM(){$('ov').style.display='none'}
 const ask=(t,y)=>new Promise(r=>{$('ct').textContent=t;$('cy').textContent=y||'Evet';$('cf').style.display='flex';
  $('cy').onclick=()=>{$('cf').style.display='none';r(true)};$('cn').onclick=()=>{$('cf').style.display='none';r(false)}});
@@ -192,7 +241,7 @@ async function start(){
  render();status('Sınıf konumu alınıyor…');
  const loc=await getLoc();
  if(!live)return;
- const ok=await push(loc);
+ await endP;const ok=await push(loc);
  if(!ok){live=false;render();return}
  status(cur.name+' · Yoklama aktif'+(loc?'':' (konum alınamadı)'));
  poll()}
@@ -236,10 +285,10 @@ function poll(){
  },2000)}
 
 async function endLive(){
- live=false;clearInterval(timer);
- if(cur){cur.students.forEach(s=>{s.isPresent=false;s.qr=false;s.distanceMeters=null;s.hours=null});
-  for(const k of ['attendance','students','public']){try{await fetch(`${dbUrl()}/sessions/${cur.id}/${k}.json`,{method:'DELETE'})}catch(e){console.error(e)}}}
- status('Yoklama kapalı');render()}
+ live=false;clearInterval(timer);const c=cur;
+ if(c)c.students.forEach(s=>{s.isPresent=false;s.qr=false;s.distanceMeters=null;s.hours=null});
+ status('Yoklama kapalı');render();
+ if(c)endP=Promise.all(['attendance','students','public'].map(k=>fetch(`${dbUrl()}/sessions/${c.id}/${k}.json`,{method:'DELETE'}).catch(e=>console.error(e))))}
 async function saveSess(){
  if(!live)return;const c=cur,hm={},dm={};
  c.students.forEach(s=>{if(s.isPresent){hm[s.studentNo]=s.hours!=null?s.hours:c.credit;if(s.distanceMeters!=null)dm[s.studentNo]=s.distanceMeters}});
@@ -279,18 +328,18 @@ function history_(){
  openM(`<div class="mt">${esc(cur.name)} - Geçmiş</div><p class="hint" style="margin-bottom:6px">Düzenlemek için haftaya dokunun.</p>`+
  cur.pastSessions.map((ss,i)=>{const n=cur.students.filter(s=>hrs(cur,ss,s.studentNo)>0).length,d=sdate(cur,i);
   return `<div class="hi" onclick="editSess(${i})"><div><b>${i+1}. Hafta${d?' · '+trd(d):''}</b><div class="hint">${ss.isHoliday?'Ders yapılmadı':'Katılan: '+n+' / '+cur.students.length}</div></div><button class="btn">Düzenle</button></div>`}).join('')+
- `<div class="row"><button class="btn" onclick="closeM()">Kapat</button></div>`)}
+ `<div class="row"><button class="btn" onclick="closeM()">Kapat</button></div>`,true)}
 function editSess(i){
  const ss=cur.pastSessions[i],m={};cur.students.forEach(s=>m[s.studentNo]=hrs(cur,ss,s.studentNo));
  const d=sdate(cur,i);es={i,m,h:!!ss.isHoliday,t:ss.date||(i+1)+'. Hafta',d:d?iso(d):''};drawEdit()}
 function drawEdit(){
  const n=cur.students.filter(s=>es.m[s.studentNo]>0).length;
  openM(`<div class="mt">${esc(cur.name)} (${es.i+1}. Hafta)</div>
- <label>Başlık</label><input id="eT" value="${esc(es.t)}"><label>Tarih</label><input id="eD" type="date" value="${esc(es.d)}">
- <label style="display:flex;align-items:center;gap:10px;margin:14px 0 6px;font-size:15px;color:var(--ink)"><input type="checkbox" id="eH" ${es.h?'checked':''} onchange="togH()" style="width:22px;min-height:22px;flex:none">Ders yapılmadı (tatil / iptal)</label>
- <p class="hint" style="margin:6px 0 6px">${es.h?'Bu hafta devam hesabına ve öğrenci ekranına <b>dahil edilmez</b>.':'<b>Katılan: '+n+' / '+cur.students.length+'</b> · saat için rozete dokunun'}</p>
+ <div class="eg"><div><label for="eT">Başlık</label><input id="eT" value="${esc(es.t)}"></div><div><label for="eD">Tarih</label><input id="eD" type="date" value="${esc(es.d)}"></div></div>
+ <label class="tg"><input type="checkbox" id="eH" ${es.h?'checked':''} onchange="togH()">Ders yapılmadı (tatil / iptal)</label>
+ <p class="hint" style="margin:10px 2px 8px">${es.h?'Bu hafta devam hesabına ve öğrenci ekranına <b>dahil edilmez</b>.':'<b>Katılan: '+n+' / '+cur.students.length+'</b> · saat için rozete dokunun'}</p>
  <div class="list" style="${es.h?'opacity:.4;pointer-events:none':''}">${cur.students.map(s=>{const h=es.m[s.studentNo];return `<div class="si" onclick="cycEdit('${esc(s.studentNo)}')"><span class="no">${esc(s.studentNo)}</span><span class="nm">${esc(s.fullName)}</span><b class="hb2 ${h>0?'ok':''}">${h}</b></div>`}).join('')}</div>
- <div class="row"><button class="btn s" onclick="saveEdit()">Kaydet</button><button class="btn d" onclick="delEdit()">Sil</button><button class="btn" onclick="history_()">Geri</button></div>`);}
+ <div class="row"><button class="btn s" onclick="saveEdit()">Kaydet</button><button class="btn d" onclick="delEdit()">Sil</button><button class="btn" onclick="history_()">Geri</button></div>`,true);}
 function togH(){es.t=$('eT').value;es.d=$('eD').value;es.h=$('eH').checked;drawEdit()}
 function cycEdit(no){es.t=$('eT').value;es.d=$('eD').value;es.m[no]=((es.m[no]||0)+1)%(cur.credit+1);const y=$('mb').scrollTop;drawEdit();$('mb').scrollTop=y}
 function saveEdit(){
@@ -317,7 +366,7 @@ function chart(r){
   h+=`<tr><td>${x.i+1}</td><td class="l"><b>${esc(x.s.fullName)}</b><br><small>${esc(x.s.studentNo)}</small></td>`+
   x.cells.map(v=>v===null?'<td>–</td>':v>0?`<td style="background:#c8e6c9;color:#2e7d32"><b>${v}</b></td>`:'<td style="background:#ffcdd2;color:#c62828"><b>0</b></td>').join('')+
   `<td><b>${x.att}/${x.poss}</b></td><td><b>${x.poss?'%'+Math.round(x.att/x.poss*100):'-'}</b></td><td style="color:${CL[x.st]}"><b>${x.rem>=0?x.rem:(-x.rem)+' aştı'}</b></td><td style="color:${CL[fin&&x.st!=='over'?'ok':x.st]}"><b>${lb}</b></td></tr>`});
- openM(h+`</tbody></table></div><div class="row"><button class="btn" onclick="closeM()">Kapat</button></div>`)}
+ openM(h+`</tbody></table></div><div class="row"><button class="btn" onclick="closeM()">Kapat</button></div>`,true)}
 
 /* ---------- yoklama kağıdı ---------- */
 function sheet(){
