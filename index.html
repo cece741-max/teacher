@@ -523,7 +523,7 @@ async function onBack(){
  if($('ov').style.display==='flex')return closeM();
  if($('sheet').style.display==='block')return closeSheet();
  if(live)return cancel();
- if(await ask('Uygulamadan çıkılsın mı?','Çık'))quit()}
+ quit()}
 addEventListener('popstate',()=>{history.pushState({b:1},'');onBack()});
 load();fill();
 </script>
