@@ -181,6 +181,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   <div class="lh"><div class="lc"><div><strong id="sum">0 / 0</strong> <span>katıldı</span></div><span id="st">Yoklama kapalı</span></div><button class="qb" onclick="qr()">QR kod</button></div>
   <div class="bar"><i id="fill"></i></div>
   <div class="seg" id="seg"><button data-f="all" onclick="setF('all')"></button><button data-f="in" onclick="setF('in')"></button><button data-f="out" onclick="setF('out')"></button></div>
+  <button class="btn" id="allb" onclick="markAll()" style="width:100%;margin-top:8px;min-height:40px;font-size:14px"></button>
  </div>
  <div id="list" class="list"></div>
 </div>
@@ -238,6 +239,7 @@ function render(){
  document.body.classList.toggle('live',live);
  $('sum').textContent=p+' / '+ss.length;$('fill').style.width=ss.length?p/ss.length*100+'%':0;
  const L={all:'Tümü',in:'Gelen',out:'Gelmeyen'},N={all:ss.length,in:p,out:ss.length-p};
+ const ab=$('allb');if(ab){const hand=ss.some(x=>x.isPresent&&!x.qr);ab.textContent=p<ss.length?'Tümünü işaretle (gelmeyenlere dokunun)':'Elden işaretlenenleri temizle';ab.disabled=!ss.length||(p===ss.length&&!hand)}
  document.querySelectorAll('#seg button').forEach(b=>{b.textContent=L[b.dataset.f]+' '+N[b.dataset.f];b.classList.toggle('on',b.dataset.f===filter)});
  $('bc').innerHTML=cur&&live?`<b>${esc(cur.name)}</b><span>${cur.pastSessions.length+1}. hafta · ${ss.length} öğrenci</span>`:'<b>Yoklama</b><span>Öğretim Elemanı Paneli</span>';
  const box=$('list');box.innerHTML='';
@@ -266,6 +268,13 @@ async function tap(s){
 async function cycle(s){
  const cr=cur.credit,h=s.isPresent?(s.hours!=null?s.hours:cr):0,n=(h+1)%(cr+1);
  if(n===0)await unmark(s);else{s.isPresent=true;s.hours=n}
+ render()}
+
+async function markAll(){
+ if(!live||!cur)return;const ss=cur.students;
+ if(ss.some(s=>!s.isPresent)){ss.forEach(s=>{if(!s.isPresent){s.isPresent=true;s.hours=null}});filter='all'}
+ else{if(!(await ask('Elden işaretlenen tüm öğrenciler gelmedi olarak ayarlanacak (QR ile katılanlar korunur).','Temizle')))return;
+  ss.forEach(s=>{if(s.isPresent&&!s.qr){s.isPresent=false;s.hours=null}})}
  render()}
 
 /* ---------- yoklama oturumu ---------- */
@@ -356,11 +365,12 @@ async function delCourse(){
 
 /* ---------- geçmiş ---------- */
 function history_(){
- if(!cur||!cur.pastSessions.length)return alert('Bu derse ait geçmiş yoklama yok.');
+ if(!cur)return alert('Önce bir ders seçin.');
  openM(`<div class="mt">${esc(cur.name)} - Geçmiş</div><p class="hint" style="margin-bottom:6px">Düzenlemek için haftaya dokunun.</p>`+
  cur.pastSessions.map((ss,i)=>{const n=cur.students.filter(s=>hrs(cur,ss,s.studentNo)>0).length,d=sdate(cur,i);
   return `<div class="hi" onclick="editSess(${i})"><div><b>${i+1}. Hafta${d?' · '+trd(d):''}</b><div class="hint">${ss.isHoliday?'Ders yapılmadı':'Katılan: '+n+' / '+cur.students.length}</div></div><button class="btn">Düzenle</button></div>`}).join('')+
- `<div class="row"><button class="btn" onclick="closeM()">Kapat</button></div>`,true)}
+ (cur.pastSessions.length?'':'<div class="em">Bu derse ait geçmiş yoklama yok.</div>')+
+ `<div class="row"><button class="btn s" onclick="addWeek()">+ Hafta ekle</button><button class="btn" onclick="closeM()">Kapat</button></div>`,true)}
 function editSess(i){
  const ss=cur.pastSessions[i],m={};cur.students.forEach(s=>m[s.studentNo]=hrs(cur,ss,s.studentNo));
  const d=sdate(cur,i);es={i,m,h:!!ss.isHoliday,t:ss.date||(i+1)+'. Hafta',d:d?iso(d):''};drawEdit()}
@@ -379,6 +389,38 @@ function saveEdit(){
  if(es.h)ss.isHoliday=true;else delete ss.isHoliday;
  ss.studentHoursMap=es.m;ss.presentStudentNos=Object.keys(es.m).filter(k=>es.m[k]>0);save();history_()}
 async function delEdit(){if(!(await ask('Bu haftanın yoklama kaydı silinecek.','Kaydı sil')))return;cur.pastSessions.splice(es.i,1);save();cur.pastSessions.length?history_():closeM()}
+
+/* ---------- hafta ekle (imzalı listeden: sadece gelmeyenleri işaretle) ---------- */
+let nw=null;
+function addWeek(){
+ if(live)return alert('Yoklama açıkken hafta eklenemez. Önce yoklamayı kaydedin veya kapatın.');
+ if(!cur.students.length)return alert('Bu derste öğrenci yok.');
+ const i=cur.pastSessions.length,d=sdate(cur,i)||new Date();
+ nw={abs:{},t:(i+1)+'. Hafta',d:iso(d),q:''};drawNew()}
+function nwKeep(){const t=$('nT'),d=$('nD');if(t)nw.t=t.value;if(d)nw.d=d.value}
+function nwList(){
+ const q=nw.q.trim().toLocaleLowerCase('tr');
+ return cur.students.filter(s=>!q||s.studentNo.toLowerCase().includes(q)||s.fullName.toLocaleLowerCase('tr').includes(q)).map(s=>{
+  const a=!!nw.abs[s.studentNo];
+  return `<div class="si${a?'':' on'}" onclick="nwTog('${esc(s.studentNo)}')"><span class="no">${esc(s.studentNo)}</span><span class="nm">${esc(s.fullName)}</span><b class="hb2 ${a?'':'ok'}">${a?0:cur.credit}</b></div>`}).join('')||'<div class="em">Sonuç yok.</div>'}
+function nwInfo(){const n=Object.keys(nw.abs).length,t=cur.students.length;return `<b>Gelmeyen: ${n}</b> · Gelen: ${t-n} / ${t} · gelmeyen öğrenciye dokunun`}
+function drawNew(){
+ openM(`<div class="mt">${esc(cur.name)} (${cur.pastSessions.length+1}. Hafta ekle)</div>
+ <div class="eg"><div><label for="nT">Başlık</label><input id="nT" value="${esc(nw.t)}"></div><div><label for="nD">Tarih</label><input id="nD" type="date" value="${esc(nw.d)}"></div></div>
+ <p class="hint" style="margin:10px 2px 8px">İmzalı listeye bakın: <b>herkes varsayılan olarak gelmiş</b> sayılır. Sadece gelmeyenlere dokunun.</p>
+ <input id="nQ" type="search" placeholder="Öğrenci no / ad ara" value="${esc(nw.q)}" oninput="nw.q=this.value;$('nL').innerHTML=nwList()" style="margin-bottom:8px">
+ <p class="hint" id="nI" style="margin:0 2px 8px">${nwInfo()}</p>
+ <div class="list" id="nL">${nwList()}</div>
+ <div class="row"><button class="btn s" onclick="saveNew()">Haftayı kaydet</button><button class="btn" onclick="history_()">Vazgeç</button></div>`,true)}
+function nwTog(no){nwKeep();if(nw.abs[no])delete nw.abs[no];else nw.abs[no]=1;
+ const y=$('mb').scrollTop;$('nL').innerHTML=nwList();$('nI').innerHTML=nwInfo();$('mb').scrollTop=y}
+async function saveNew(){
+ nwKeep();const c=cur,n=Object.keys(nw.abs).length,t=c.students.length;
+ if(!(await ask(`${t-n} öğrenci geldi, ${n} öğrenci gelmedi olarak ${c.pastSessions.length+1}. hafta eklenecek.`,'Kaydet')))return;
+ const hm={};c.students.forEach(s=>{hm[s.studentNo]=nw.abs[s.studentNo]?0:c.credit});
+ const o={id:Date.now()+'',date:nw.t.trim()||(c.pastSessions.length+1)+'. Hafta',studentHoursMap:hm,presentStudentNos:Object.keys(hm).filter(k=>hm[k]>0)};
+ if(nw.d)o.dateISO=nw.d;
+ c.pastSessions.push(o);nw=null;save();render();history_()}
 
 /* ---------- çizelge ---------- */
 function chart(r){
